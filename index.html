@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Naj's Taskboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --bg:       #f5f2ed;
@@ -936,6 +937,142 @@ header {
   .ref-search { width:140px; }
 }
 
+
+/* ══════════════════════════════════════
+   MONTH END & YEAR END CHECKLISTS
+══════════════════════════════════════ */
+.cl-wrap { padding: 0; }
+.cl-sticky-head {
+  position: sticky; top: 105px; z-index: 30;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  padding: 14px 20px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.cl-scroll-body { padding: 16px 20px 40px; }
+.cl-topbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.cl-heading { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--text); }
+.cl-period-badge {
+  background: var(--gold-bg); border:1px solid #e8c97a; color:var(--gold);
+  font-size:13px; font-weight:600; padding:4px 14px; border-radius:20px;
+  font-family:'DM Sans',sans-serif;
+}
+.cl-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+.cl-btn {
+  padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600;
+  cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s;
+  display:flex; align-items:center; gap:6px;
+}
+.cl-btn:hover { opacity:.85; }
+.cl-btn-gold  { background:var(--gold);  color:#fff; }
+.cl-btn-red   { background:var(--red);   color:#fff; }
+.cl-btn-blue  { background:var(--blue);  color:#fff; }
+.cl-btn-ghost { background:var(--bg2); border:1px solid var(--border); color:var(--text2); }
+
+/* progress bar */
+.cl-progress-wrap {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:16px 20px; margin-bottom:18px; box-shadow:var(--shadow);
+}
+.cl-progress-top { display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+.cl-progress-label { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+.cl-progress-pct {
+  font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--gold);
+}
+.cl-progress-count { font-size:12px; color:var(--muted); }
+.cl-bar-bg { height:8px; background:var(--bg2); border-radius:4px; overflow:hidden; }
+.cl-bar-fill { height:100%; border-radius:4px; background:var(--green); transition:width .4s ease; }
+.cl-bar-fill.partial { background:var(--gold); }
+.cl-bar-fill.done    { background:var(--green); }
+
+/* section */
+.cl-section {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden;
+}
+.cl-section-head {
+  padding:12px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; background:var(--bg2);
+  cursor:pointer; user-select:none;
+}
+.cl-section-icon { font-size:18px; }
+.cl-section-title { font-size:13px; font-weight:700; color:var(--text); flex:1; text-transform:uppercase; letter-spacing:.5px; }
+.cl-section-prog { font-size:11px; color:var(--muted); }
+.cl-section-toggle { font-size:12px; color:var(--muted); transition:transform .2s; }
+.cl-section-toggle.open { transform:rotate(180deg); }
+.cl-section-body { padding:12px 16px; }
+
+/* checklist item */
+.cl-item {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:9px 0; border-bottom:1px solid var(--bg2);
+  transition:background .1s;
+}
+.cl-item:last-child { border-bottom:none; }
+.cl-item-check {
+  width:18px; height:18px; border:1.5px solid var(--border2); border-radius:4px;
+  flex-shrink:0; margin-top:1px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.cl-item-check:hover { border-color:var(--green); }
+.cl-item-check.done { background:var(--green); border-color:var(--green); }
+.cl-item-check.done::after { content:'✓'; font-size:11px; color:#fff; font-weight:700; }
+.cl-item-text {
+  flex:1; font-size:13px; color:var(--text); line-height:1.5;
+  border:none; background:transparent; outline:none;
+  font-family:'DM Sans',sans-serif; resize:none; padding:0;
+}
+.cl-item-text.done-text { text-decoration:line-through; color:var(--muted); }
+.cl-item-del {
+  background:none; border:none; color:transparent; cursor:pointer;
+  font-size:13px; padding:0 3px; transition:color .1s; flex-shrink:0;
+}
+.cl-item:hover .cl-item-del { color:var(--muted); }
+.cl-item-del:hover { color:var(--red) !important; }
+
+/* add item row */
+.cl-add-row { display:flex; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--bg2); }
+.cl-add-input {
+  flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px;
+  padding:6px 10px; font-size:12px; color:var(--text); outline:none;
+  font-family:'DM Sans',sans-serif; transition:border-color .15s;
+}
+.cl-add-input:focus { border-color:var(--gold); }
+.cl-add-btn {
+  background:var(--gold); color:#fff; border:none; border-radius:6px;
+  padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:opacity .15s; white-space:nowrap;
+}
+.cl-add-btn:hover { opacity:.85; }
+
+/* notes */
+.cl-notes {
+  width:100%; background:var(--bg); border:1px solid var(--border); border-radius:7px;
+  padding:9px 11px; font-size:12px; color:var(--text); line-height:1.7;
+  font-family:'DM Sans',sans-serif; resize:vertical; min-height:60px;
+  outline:none; transition:border-color .15s; margin-top:10px;
+}
+.cl-notes:focus { border-color:var(--gold); }
+.cl-save-ind { font-size:11px; color:var(--muted); margin-top:4px; min-height:16px; }
+
+/* history */
+.cl-history-item {
+  display:flex; align-items:center; gap:10px; padding:8px 0;
+  border-bottom:1px solid var(--bg2); font-size:12px;
+}
+.cl-history-item:last-child { border-bottom:none; }
+.cl-history-period { font-weight:600; color:var(--text2); min-width:100px; }
+.cl-history-prog { color:var(--muted); flex:1; }
+.cl-history-badge {
+  font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600;
+}
+.cl-history-badge.complete { background:var(--green-bg); color:var(--green); }
+.cl-history-badge.partial  { background:var(--gold-bg);  color:var(--gold); }
+
+@media (max-width:640px) {
+  .cl-sticky-head { top:95px; padding:10px 14px 10px; }
+  .cl-scroll-body { padding:12px 14px 28px; }
+  .cl-progress-pct { font-size:20px; }
+}
+
 </style>
 </head>
 <body>
@@ -977,6 +1114,8 @@ header {
   <button class="tab-btn" onclick="switchTab('calendar',this)">📅 Calendar</button>
   <button class="tab-btn" onclick="switchTab('deadlines',this)">🗓 Deadlines</button>
   <button class="tab-btn" onclick="switchTab('reference',this)">📚 Reference</button>
+  <button class="tab-btn" onclick="switchTab('monthend',this)">📋 Month End</button>
+  <button class="tab-btn" onclick="switchTab('yearend',this)">📆 Year End</button>
   <button class="tab-btn" onclick="switchTab('notifications',this)">🔔 Notifications</button>
 </div>
 
@@ -1226,6 +1365,63 @@ header {
   </div>
 </div>
 
+
+<!-- ═══ MONTH END CHECKLIST ═══ -->
+<div class="tab-pane" id="tab-monthend">
+  <div class="cl-wrap">
+    <div class="cl-sticky-head">
+      <div class="cl-topbar">
+        <div class="cl-heading">📋 Month End Checklist</div>
+        <div class="cl-period-badge" id="me-period-badge">Loading…</div>
+        <div class="cl-actions">
+          <button class="cl-btn cl-btn-gold" onclick="addClSection('me')">+ Add Section</button>
+          <button class="cl-btn cl-btn-blue" onclick="showClHistory('me')">📜 History</button>
+          <button class="cl-btn cl-btn-red"  onclick="resetChecklist('me')">🔄 New Month</button>
+        </div>
+      </div>
+      <div class="cl-bar-bg"><div class="cl-bar-fill" id="me-bar" style="width:0%"></div></div>
+    </div>
+    <div class="cl-scroll-body">
+      <div class="cl-progress-wrap">
+        <div class="cl-progress-top">
+          <div class="cl-progress-label">Progress this month</div>
+          <div class="cl-progress-pct" id="me-pct">0%</div>
+          <div class="cl-progress-count" id="me-count">0 / 0 tasks</div>
+        </div>
+      </div>
+      <div id="me-sections"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ YEAR END CHECKLIST ═══ -->
+<div class="tab-pane" id="tab-yearend">
+  <div class="cl-wrap">
+    <div class="cl-sticky-head">
+      <div class="cl-topbar">
+        <div class="cl-heading">📆 Year End Checklist</div>
+        <div class="cl-period-badge" id="ye-period-badge">Loading…</div>
+        <div class="cl-actions">
+          <button class="cl-btn cl-btn-gold" onclick="addClSection('ye')">+ Add Section</button>
+          <button class="cl-btn cl-btn-blue" onclick="showClHistory('ye')">📜 History</button>
+          <button class="cl-btn cl-btn-red"  onclick="resetChecklist('ye')">🔄 New Year</button>
+        </div>
+      </div>
+      <div class="cl-bar-bg"><div class="cl-bar-fill" id="ye-bar" style="width:0%"></div></div>
+    </div>
+    <div class="cl-scroll-body">
+      <div class="cl-progress-wrap">
+        <div class="cl-progress-top">
+          <div class="cl-progress-label">Progress this year</div>
+          <div class="cl-progress-pct" id="ye-pct">0%</div>
+          <div class="cl-progress-count" id="ye-count">0 / 0 tasks</div>
+        </div>
+      </div>
+      <div id="ye-sections"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ NOTIFICATIONS TAB ═══ -->
 <div class="tab-pane" id="tab-notifications">
   <div class="notif-panel">
@@ -1261,24 +1457,24 @@ header {
   <div class="notif-panel" style="margin-top:16px">
     <div class="notif-title">☁️ Cross-Device Sync</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
-      Uses your <strong>GitHub account</strong> to sync across all devices securely.<br>
-      One-time setup: create a free GitHub token → paste below → done.
+      Syncs automatically using your <strong>Google account (najman1987@gmail.com)</strong>.<br>
+      Click <strong>Sign in with Google</strong> once — then it syncs automatically on every device.
     </div>
-    <div style="background:var(--blue-bg);border:1px solid #b8d4f8;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--blue);line-height:1.8">
-      <strong>How to get your token (2 minutes):</strong><br>
-      1. Go to <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong><br>
-      2. Click <strong>Generate new token (classic)</strong><br>
-      3. Note: "Taskboard sync" → tick <strong>gist</strong> checkbox → Generate<br>
-      4. Copy the token → paste below
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-      <span style="font-size:12px;color:var(--text2);font-weight:500;min-width:90px">GitHub Token</span>
-      <input id="gist-token-input" type="password" style="flex:1;min-width:160px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      <button class="notif-btn" onclick="saveToken()" style="background:var(--green)">💾 Save Token</button>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="notif-btn" onclick="signInAndSync()" style="background:#4285f4;display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
+        Sign in with Google
+      </button>
       <button class="notif-btn" onclick="forcePush()" style="background:var(--text)">⬆️ Push My Data</button>
       <button class="notif-btn" onclick="forcePull()" style="background:var(--text)">⬇️ Pull Latest</button>
+    </div>
+    <div style="background:var(--gold-bg);border:1px solid #e8c97a;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--gold);margin-bottom:8px;line-height:1.7">
+      ⚠️ <strong>One-time Google Cloud setup needed</strong> — I will guide you through it. Takes 5 minutes, completely free.<br>
+      Until then your data is safely stored locally and backed up via Export Excel.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="notif-btn" onclick="exportAndSaveOneDrive()" style="background:#0078d4">💾 Backup to OneDrive</button>
+      <button class="notif-btn" onclick="exportExcel()" style="background:var(--green)">📥 Export Excel Backup</button>
     </div>
     <div class="notif-status" id="sync-setup-status" style="margin-top:10px"></div>
   </div>
@@ -1353,11 +1549,15 @@ const TASKS_KEY = 'naj_tasks_v2';
 const TAGS_KEY  = 'naj_custom_tags_v1';
 
 // ══════════════════════════════════════
-// REAL CLOUD SYNC via GitHub Gist
-// Uses your existing GitHub account — works everywhere
+// REAL CLOUD SYNC via Google Drive
+// Uses Google Identity Services — works everywhere including corporate networks
 // ══════════════════════════════════════
-let GIST_ID    = localStorage.getItem('naj_gist_id')    || null;
-let GIST_TOKEN = localStorage.getItem('naj_gist_token') || null;
+const GDRIVE_CLIENT_ID = '946999689441-1dpb7c2dhrnm9dh340h81v5k4ffm54dt.apps.googleusercontent.com';
+const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const GDRIVE_FILE_NAME = 'naj_taskboard_data.json';
+let gdToken   = localStorage.getItem('naj_gd_token')   || null;
+let gdFileId  = localStorage.getItem('naj_gd_file_id') || null;
+let gdExpiry  = parseInt(localStorage.getItem('naj_gd_expiry') || '0');
 
 // ── SYNC STATUS ──
 function setSyncStatus(state, label) {
@@ -1388,64 +1588,97 @@ function loadLocal() {
   const lc = localStorage.getItem('naj_custom_tags_v1');
   const ld = localStorage.getItem('naj_deadlines_v1');
   const lr = localStorage.getItem('naj_reference_v1');
-  if (lt) tasks      = JSON.parse(lt);
+  if (lt) tasks = JSON.parse(lt);
   if (lc) customTags = JSON.parse(lc);
-  if (ld) deadlines  = JSON.parse(ld);
-  if (lr) refCards   = JSON.parse(lr);
+  if (ld) deadlines = JSON.parse(ld);
+  if (lr) refCards = JSON.parse(lr);
   return false;
 }
 
-// ── GIST: CREATE ──
-async function createGist() {
-  if (!GIST_TOKEN) return false;
-  try {
-    const res = await fetch('https://api.github.com/gists', {
-      method: 'POST',
-      headers: { 'Authorization': `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        description: 'NajTaskboard Data',
-        public: false,
-        files: { 'taskboard.json': { content: JSON.stringify(getAllData()) } }
-      })
+// ── GOOGLE SIGN IN ──
+function isTokenValid() {
+  return gdToken && Date.now() < gdExpiry - 60000;
+}
+
+function googleSignIn() {
+  return new Promise((resolve) => {
+    if (!GDRIVE_CLIENT_ID) { showToast('Google Drive not configured yet.'); resolve(false); return; }
+    if (isTokenValid()) { resolve(true); return; }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID,
+      scope: GDRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp.access_token) {
+          gdToken  = resp.access_token;
+          gdExpiry = Date.now() + (resp.expires_in * 1000);
+          localStorage.setItem('naj_gd_token',  gdToken);
+          localStorage.setItem('naj_gd_expiry', gdExpiry.toString());
+          resolve(true);
+        } else { resolve(false); }
+      }
     });
-    const data = await res.json();
-    if (data.id) {
-      GIST_ID = data.id;
-      localStorage.setItem('naj_gist_id', GIST_ID);
-      setSyncStatus('synced', 'Synced ✓');
-      showToast('☁️ Sync ready! Your data is now in the cloud.');
-      return true;
-    }
-  } catch(e) {}
-  setSyncStatus('error', 'Local only');
-  return false;
+    client.requestAccessToken({ prompt: 'consent' });
+  });
 }
 
-// ── GIST: PUSH ──
+// ── DRIVE: FIND OR CREATE FILE ──
+async function getDriveFileId() {
+  if (gdFileId) return gdFileId;
+  const search = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FILE_NAME}'&fields=files(id)`,
+    { headers: { Authorization: `Bearer ${gdToken}` } }
+  );
+  const data = await search.json();
+  if (data.files && data.files.length > 0) {
+    gdFileId = data.files[0].id;
+    localStorage.setItem('naj_gd_file_id', gdFileId);
+    return gdFileId;
+  }
+  // Create new file
+  const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${gdToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: GDRIVE_FILE_NAME })
+  });
+  const newFile = await meta.json();
+  gdFileId = newFile.id;
+  localStorage.setItem('naj_gd_file_id', gdFileId);
+  return gdFileId;
+}
+
+// ── DRIVE: PUSH ──
 async function pushToCloud() {
-  if (!GIST_TOKEN) return;
-  if (!GIST_ID) { await createGist(); return; }
+  saveLocal();
+  if (!GDRIVE_CLIENT_ID) return;
   try {
+    const ok = await googleSignIn();
+    if (!ok) { setSyncStatus('error', 'Sign in needed'); return; }
     setSyncStatus('syncing', 'Saving…');
-    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-      method: 'PATCH',
-      headers: { 'Authorization': `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: { 'taskboard.json': { content: JSON.stringify(getAllData()) } } })
+    const fileId = await getDriveFileId();
+    const blob = new Blob([JSON.stringify(getAllData())], { type: 'application/json' });
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify({ name: GDRIVE_FILE_NAME })], { type: 'application/json' }));
+    form.append('file', blob);
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
+      method: 'PATCH', headers: { Authorization: `Bearer ${gdToken}` }, body: form
     });
     setSyncStatus('synced', 'Synced ✓');
   } catch(e) { setSyncStatus('error', 'Saved locally'); }
 }
 
-// ── GIST: PULL ──
+// ── DRIVE: PULL ──
 async function pullFromCloud() {
-  if (!GIST_TOKEN || !GIST_ID) return false;
+  if (!GDRIVE_CLIENT_ID) return false;
   try {
-    const res  = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-      headers: { 'Authorization': `token ${GIST_TOKEN}` }
+    const ok = await googleSignIn();
+    if (!ok) return false;
+    const fileId = await getDriveFileId();
+    if (!fileId) return false;
+    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${gdToken}` }
     });
     const data = await res.json();
-    const content = data.files?.['taskboard.json']?.content;
-    if (content) { applyAllData(JSON.parse(content)); saveLocal(); return true; }
+    if (data && data.tasks !== undefined) { applyAllData(data); saveLocal(); return true; }
   } catch(e) {}
   return false;
 }
@@ -1456,12 +1689,12 @@ async function loadData() {
   loadLocal();
   document.getElementById('overlay').style.display = 'none';
   updateTagDropdown(); renderCustomTags(); render();
-  if (GIST_TOKEN && GIST_ID) {
+  if (GDRIVE_CLIENT_ID && isTokenValid()) {
     const ok = await pullFromCloud();
     if (ok) { updateTagDropdown(); renderCustomTags(); render(); setSyncStatus('synced', 'Synced ✓'); }
-    else setSyncStatus('error', 'Local only');
+    else setSyncStatus('error', GDRIVE_CLIENT_ID ? 'Sign in to sync' : 'Local only');
   } else {
-    setSyncStatus('error', 'Local only');
+    setSyncStatus('error', GDRIVE_CLIENT_ID ? 'Click Sign In to sync' : 'Local only');
   }
 }
 
@@ -1473,7 +1706,7 @@ async function saveData() {
 
 // Poll every 30s
 setInterval(async () => {
-  if (!GIST_TOKEN || !GIST_ID) return;
+  if (!GDRIVE_CLIENT_ID || !isTokenValid()) return;
   const ok = await pullFromCloud();
   if (ok) { updateTagDropdown(); renderCustomTags(); render(); setSyncStatus('synced', 'Updated ✓'); }
 }, 30000);
@@ -2342,16 +2575,319 @@ function renderReference() {
   }).join('');
 }
 
+// ══════════════════════════════════════
+// MONTH END & YEAR END CHECKLISTS
+// ══════════════════════════════════════
+const ME_KEY = 'naj_monthend_v1';
+const YE_KEY = 'naj_yearend_v1';
+const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Default sections for both checklists
+const DEFAULT_SECTIONS = [
+  {
+    id: 'sec1', title: 'VAT & Tax', icon: '🧾', open: true,
+    items: [
+      { id: 'i1', text: 'Prepare and submit VAT return (NL)', done: false },
+      { id: 'i2', text: 'Prepare and submit VAT return (UK)', done: false },
+      { id: 'i3', text: 'Prepare and submit VAT return (CZ)', done: false },
+      { id: 'i4', text: 'Reconcile VAT control accounts', done: false },
+      { id: 'i5', text: 'Review input/output VAT figures vs ledger', done: false },
+    ]
+  },
+  {
+    id: 'sec2', title: 'Bank & Reconciliation', icon: '🏦', open: true,
+    items: [
+      { id: 'i6',  text: 'Reconcile all bank accounts', done: false },
+      { id: 'i7',  text: 'Reconcile intercompany balances', done: false },
+      { id: 'i8',  text: 'Clear unreconciled items older than 30 days', done: false },
+      { id: 'i9',  text: 'Review and post bank charges', done: false },
+    ]
+  },
+  {
+    id: 'sec3', title: 'Journals & Ledger', icon: '📒', open: true,
+    items: [
+      { id: 'i10', text: 'Post all accrual journals', done: false },
+      { id: 'i11', text: 'Post prepayment journals', done: false },
+      { id: 'i12', text: 'Post depreciation journals', done: false },
+      { id: 'i13', text: 'Review and post payroll journals', done: false },
+      { id: 'i14', text: 'Clear suspense account', done: false },
+    ]
+  },
+  {
+    id: 'sec4', title: 'Reporting', icon: '📊', open: true,
+    items: [
+      { id: 'i15', text: 'Prepare P&L vs budget analysis', done: false },
+      { id: 'i16', text: 'Prepare balance sheet review', done: false },
+      { id: 'i17', text: 'Send management accounts to CFO', done: false },
+      { id: 'i18', text: 'Update cash flow forecast', done: false },
+    ]
+  },
+  {
+    id: 'sec5', title: 'Procurement & AP', icon: '🧾', open: false,
+    items: [
+      { id: 'i19', text: 'Process all vendor invoices', done: false },
+      { id: 'i20', text: 'Reconcile AP ledger', done: false },
+      { id: 'i21', text: 'Review aged creditors report', done: false },
+      { id: 'i22', text: 'Process payment runs', done: false },
+    ]
+  },
+  {
+    id: 'sec6', title: 'Events & Projects', icon: '🏇', open: false,
+    items: [
+      { id: 'i23', text: 'Reconcile GCAT event costs', done: false },
+      { id: 'i24', text: 'Update project budget tracker', done: false },
+      { id: 'i25', text: 'Review and post catering/vendor invoices', done: false },
+    ]
+  }
+];
+
+// ── STATE ──
+let meData = null; // { period, sections, notes, history }
+let yeData = null;
+
+// ── LOAD / SAVE ──
+function loadChecklist(key) {
+  const raw = localStorage.getItem(key);
+  if (raw) { try { return JSON.parse(raw); } catch(e){} }
+  return null;
+}
+
+function saveChecklist(type) {
+  const data = type === 'me' ? meData : yeData;
+  const key  = type === 'me' ? ME_KEY  : YE_KEY;
+  localStorage.setItem(key, JSON.stringify(data));
+  pushToCloud();
+}
+
+function currentPeriod(type) {
+  const now = new Date();
+  if (type === 'me') return MONTHS_FULL[now.getMonth()] + ' ' + now.getFullYear();
+  return 'Year ' + now.getFullYear();
+}
+
+function initChecklist(type) {
+  const key  = type === 'me' ? ME_KEY : YE_KEY;
+  let data   = loadChecklist(key);
+  const period = currentPeriod(type);
+
+  if (!data) {
+    // First time — create with defaults
+    data = {
+      period,
+      sections: JSON.parse(JSON.stringify(DEFAULT_SECTIONS)).map(s => ({
+        ...s,
+        id: uid(),
+        items: s.items.map(i => ({ ...i, id: uid() }))
+      })),
+      notes: '',
+      history: []
+    };
+  } else if (data.period !== period) {
+    // New period — archive old, reset
+    if (!data.history) data.history = [];
+    const total = data.sections.reduce((a,s)=>a+s.items.length,0);
+    const done  = data.sections.reduce((a,s)=>a+s.items.filter(i=>i.done).length,0);
+    data.history.unshift({ period: data.period, done, total, notes: data.notes });
+    if (data.history.length > 24) data.history = data.history.slice(0,24);
+    // Reset items
+    data.sections.forEach(s => s.items.forEach(i => i.done = false));
+    data.period = period;
+    data.notes  = '';
+  }
+
+  if (type === 'me') meData = data;
+  else               yeData = data;
+  saveChecklist(type);
+}
+
+// ── RENDER ──
+function renderChecklist(type) {
+  const data   = type === 'me' ? meData : yeData;
+  if (!data) return;
+  const prefix = type;
+
+  // Period badge
+  document.getElementById(`${prefix}-period-badge`).textContent = data.period;
+
+  // Progress
+  const allItems = data.sections.flatMap(s=>s.items);
+  const total    = allItems.length;
+  const done     = allItems.filter(i=>i.done).length;
+  const pct      = total ? Math.round(done/total*100) : 0;
+  document.getElementById(`${prefix}-pct`).textContent   = pct + '%';
+  document.getElementById(`${prefix}-count`).textContent = `${done} / ${total} tasks`;
+  const bar = document.getElementById(`${prefix}-bar`);
+  bar.style.width = pct + '%';
+  bar.className   = `cl-bar-fill ${pct===100?'done':pct>0?'partial':''}`;
+
+  // Sections
+  const container = document.getElementById(`${prefix}-sections`);
+  container.innerHTML = data.sections.map(sec => {
+    const secDone  = sec.items.filter(i=>i.done).length;
+    const secTotal = sec.items.length;
+    return `
+    <div class="cl-section" id="clsec-${sec.id}">
+      <div class="cl-section-head" onclick="toggleClSection('${type}','${sec.id}')">
+        <span class="cl-section-icon">${sec.icon||'📋'}</span>
+        <span class="cl-section-title">${esc(sec.title)}</span>
+        <span class="cl-section-prog">${secDone}/${secTotal}</span>
+        <span class="cl-section-toggle ${sec.open?'open':''}">▼</span>
+      </div>
+      ${sec.open ? `
+      <div class="cl-section-body">
+        ${sec.items.map(item => `
+          <div class="cl-item" id="clitem-${item.id}">
+            <div class="cl-item-check ${item.done?'done':''}" onclick="toggleClItem('${type}','${sec.id}','${item.id}')"></div>
+            <textarea class="cl-item-text ${item.done?'done-text':''}" rows="1"
+              onblur="updateClItemText('${type}','${sec.id}','${item.id}',this.value)"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+              style="height:auto"
+            >${esc(item.text)}</textarea>
+            <button class="cl-item-del" onclick="delClItem('${type}','${sec.id}','${item.id}')">✕</button>
+          </div>`).join('')}
+        <div class="cl-add-row">
+          <input class="cl-add-input" id="cl-add-${sec.id}" placeholder="Add task…"
+            onkeydown="if(event.key==='Enter')addClItem('${type}','${sec.id}')">
+          <button class="cl-add-btn" onclick="addClItem('${type}','${sec.id}')">+ Add</button>
+        </div>
+        <textarea class="cl-notes" placeholder="Section notes…"
+          onblur="updateClSectionNotes('${type}','${sec.id}',this.value)"
+        >${esc(sec.notes||'')}</textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="cl-btn cl-btn-ghost" style="font-size:11px;padding:4px 10px"
+            onclick="deleteClSection('${type}','${sec.id}')">🗑 Remove Section</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Notes
+  let notesEl = document.getElementById(`${prefix}-notes`);
+  if (!notesEl) {
+    notesEl = document.createElement('div');
+    notesEl.style.cssText = 'margin-top:16px';
+    notesEl.innerHTML = `
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Period Notes</div>
+      <textarea class="cl-notes" id="${prefix}-notes-area" placeholder="General notes for this period…"
+        onblur="updateClNotes('${type}',this.value)">${esc(data.notes||'')}</textarea>`;
+    notesEl.id = `${prefix}-notes`;
+    container.appendChild(notesEl);
+  }
+}
+
+// ── ACTIONS ──
+function toggleClSection(type, secId) {
+  const data = type==='me'?meData:yeData;
+  const sec  = data.sections.find(s=>s.id===secId);
+  if (sec) { sec.open=!sec.open; saveChecklist(type); renderChecklist(type); }
+}
+
+function toggleClItem(type, secId, itemId) {
+  const data = type==='me'?meData:yeData;
+  const sec  = data.sections.find(s=>s.id===secId);
+  const item = sec?.items.find(i=>i.id===itemId);
+  if (item) { item.done=!item.done; saveChecklist(type); renderChecklist(type); }
+}
+
+function updateClItemText(type, secId, itemId, text) {
+  const data = type==='me'?meData:yeData;
+  const sec  = data.sections.find(s=>s.id===secId);
+  const item = sec?.items.find(i=>i.id===itemId);
+  if (item && item.text!==text) { item.text=text; saveChecklist(type); }
+}
+
+function addClItem(type, secId) {
+  const input = document.getElementById('cl-add-'+secId);
+  if (!input||!input.value.trim()) return;
+  const data = type==='me'?meData:yeData;
+  const sec  = data.sections.find(s=>s.id===secId);
+  if (sec) { sec.items.push({id:uid(),text:input.value.trim(),done:false}); input.value=''; saveChecklist(type); renderChecklist(type); }
+}
+
+function delClItem(type, secId, itemId) {
+  const data = type==='me'?meData:yeData;
+  const sec  = data.sections.find(s=>s.id===secId);
+  if (sec) { sec.items=sec.items.filter(i=>i.id!==itemId); saveChecklist(type); renderChecklist(type); }
+}
+
+function updateClSectionNotes(type, secId, notes) {
+  const data = type==='me'?meData:yeData;
+  const sec  = data.sections.find(s=>s.id===secId);
+  if (sec) { sec.notes=notes; saveChecklist(type); }
+}
+
+function updateClNotes(type, notes) {
+  const data = type==='me'?meData:yeData;
+  if (data) { data.notes=notes; saveChecklist(type); }
+}
+
+function addClSection(type) {
+  const name = prompt('Section name (e.g. "Payroll", "GCAT Events"):');
+  if (!name||!name.trim()) return;
+  const icon = prompt('Icon emoji (e.g. 💼, 📊, 🏇):') || '📋';
+  const data = type==='me'?meData:yeData;
+  data.sections.push({ id:uid(), title:name.trim(), icon:icon.trim(), open:true, items:[], notes:'' });
+  saveChecklist(type); renderChecklist(type);
+  showToast(`Section "${name}" added!`);
+}
+
+function deleteClSection(type, secId) {
+  if (!confirm('Remove this section?')) return;
+  const data = type==='me'?meData:yeData;
+  data.sections = data.sections.filter(s=>s.id!==secId);
+  saveChecklist(type); renderChecklist(type);
+}
+
+function resetChecklist(type) {
+  const label = type==='me'?'month':'year';
+  if (!confirm(`Archive current ${label} and start fresh? Your history will be saved.`)) return;
+  const data = type==='me'?meData:yeData;
+  const total = data.sections.reduce((a,s)=>a+s.items.length,0);
+  const done  = data.sections.reduce((a,s)=>a+s.items.filter(i=>i.done).length,0);
+  if (!data.history) data.history=[];
+  data.history.unshift({ period:data.period, done, total, notes:data.notes });
+  if (data.history.length>24) data.history=data.history.slice(0,24);
+  data.sections.forEach(s=>s.items.forEach(i=>i.done=false));
+  data.period = currentPeriod(type);
+  data.notes  = '';
+  saveChecklist(type); renderChecklist(type);
+  showToast(`✓ New ${label} started!`);
+}
+
+function showClHistory(type) {
+  const data  = type==='me'?meData:yeData;
+  const label = type==='me'?'Month End':'Year End';
+  if (!data.history||!data.history.length) { showToast('No history yet.'); return; }
+  const rows = data.history.map(h=>`
+    <div class="cl-history-item">
+      <span class="cl-history-period">${h.period}</span>
+      <span class="cl-history-prog">${h.done}/${h.total} tasks completed</span>
+      <span class="cl-history-badge ${h.done===h.total?'complete':'partial'}">${h.done===h.total?'Complete':'Partial'}</span>
+    </div>`).join('');
+  // Show in a simple overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(26,23,20,.6);z-index:400;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:440px;max-width:94vw;max-height:80vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.2)">
+      <div style="font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--text);margin-bottom:16px">📜 ${label} History</div>
+      ${rows}
+      <button onclick="this.closest('div[style]').remove()" style="margin-top:16px;width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text2)">Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
 // ── TABS ──
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'calendar') renderCalendar();
+  if (name === 'calendar')      renderCalendar();
   if (name === 'notifications') renderSnoozedList();
-  if (name === 'deadlines') renderDeadlines();
-  if (name === 'reference') renderReference();
+  if (name === 'deadlines')     renderDeadlines();
+  if (name === 'reference')     renderReference();
+  if (name === 'monthend')      renderChecklist('me');
+  if (name === 'yearend')       renderChecklist('ye');
 }
 
 // ── CALENDAR ──
@@ -2491,45 +3027,59 @@ function printCalendar() {
 }
 
 // ── SYNC HELPERS ──
-function updateBinUI() {
-  const ti = document.getElementById('gist-token-input');
-  if (ti && GIST_TOKEN) ti.placeholder = 'Token saved ✓';
-}
+function updateBinUI() {} // kept for compatibility
 
-function saveToken() {
-  const input = document.getElementById('gist-token-input');
-  const token = (input?.value || '').trim();
-  if (!token || !token.startsWith('ghp_')) { showToast('Please enter a valid GitHub token (starts with ghp_)'); return; }
-  GIST_TOKEN = token;
-  localStorage.setItem('naj_gist_token', GIST_TOKEN);
-  if (input) { input.value = ''; input.placeholder = 'Token saved ✓'; }
+async function signInAndSync() {
   const st = document.getElementById('sync-setup-status');
-  st.textContent = 'Token saved! Pushing your data to cloud…'; st.style.color = 'var(--green)';
-  showToast('Token saved! Setting up sync…');
-  forcePush();
+  if (!GDRIVE_CLIENT_ID) {
+    if(st){st.textContent='Google Drive not configured yet — see instructions above.';st.style.color='var(--gold)';}
+    showToast('Google Drive setup needed — see Notifications tab.');
+    return;
+  }
+  if(st){st.textContent='Signing in…';st.style.color='var(--muted)';}
+  const ok = await googleSignIn();
+  if (ok) {
+    if(st){st.textContent='Signed in! Syncing…';st.style.color='var(--green)';}
+    await forcePush();
+  } else {
+    if(st){st.textContent='Sign in failed. Try again.';st.style.color='var(--red)';}
+  }
 }
 
 async function forcePush() {
   const st = document.getElementById('sync-setup-status');
-  if (!GIST_TOKEN) { showToast('Save your GitHub token first.'); return; }
-  if (st) { st.textContent = 'Pushing…'; st.style.color = 'var(--muted)'; }
+  if(st){st.textContent='Pushing to Google Drive…';st.style.color='var(--muted)';}
   await pushToCloud();
-  if (st) { st.textContent = '✓ Data pushed to cloud! Open app on other devices and click Pull Latest.'; st.style.color = 'var(--green)'; }
-  showToast('⬆️ Data pushed to cloud!');
+  if(st){st.textContent='✓ Data pushed! Open app on other devices → Pull Latest.';st.style.color='var(--green)';}
+  showToast('⬆️ Data pushed to Google Drive!');
 }
 
 async function forcePull() {
   const st = document.getElementById('sync-setup-status');
-  if (!GIST_TOKEN) { if(st){st.textContent='Save your GitHub token first.';st.style.color='var(--red)';} return; }
-  if (st) { st.textContent = 'Pulling…'; st.style.color = 'var(--muted)'; }
+  if(st){st.textContent='Pulling from Google Drive…';st.style.color='var(--muted)';}
   const ok = await pullFromCloud();
   if (ok) {
     updateTagDropdown(); renderCustomTags(); render(); renderDeadlines(); renderReference();
-    if (st) { st.textContent = '✓ Latest data loaded!'; st.style.color = 'var(--green)'; }
-    showToast('⬇️ Data pulled from cloud!');
+    if(st){st.textContent='✓ Latest data loaded!';st.style.color='var(--green)';}
+    showToast('⬇️ Data pulled from Google Drive!');
   } else {
-    if (st) { st.textContent = '⚠ Could not pull. Check token and connection.'; st.style.color = 'var(--red)'; }
+    if(st){st.textContent='⚠ Could not pull. Sign in first.';st.style.color='var(--red)';}
   }
+}
+
+// ── ONEDRIVE BACKUP ──
+function exportAndSaveOneDrive() {
+  // Download JSON backup file — user saves to OneDrive folder
+  const data = JSON.stringify(getAllData(), null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Taskboard_Backup_' + todayISO() + '.json';
+  a.click();
+  showToast('💾 Backup downloaded — save to your OneDrive folder!');
+  setTimeout(() => {
+    showToast('Tip: Move the file to your OneDrive folder for automatic cloud backup.');
+  }, 3000);
 }
 
 // ── NOTIFICATIONS ──
@@ -2752,6 +3302,8 @@ document.addEventListener('visibilitychange', () => {
 loadData().then(async () => {
   await loadDeadlines();
   await loadReference();
+  initChecklist('me');
+  initChecklist('ye');
   loadNotifSettings();
   updateBinUI();
   setTimeout(checkDeadlineNotifications, 2000);
