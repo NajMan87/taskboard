@@ -1261,21 +1261,22 @@ header {
   <div class="notif-panel" style="margin-top:16px">
     <div class="notif-title">☁️ Cross-Device Sync</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
-      Your data syncs automatically across all devices.<br>
-      First time: click <strong>Set Up Sync</strong> → copy your Bin ID → paste it on your other devices.
+      Uses your <strong>GitHub account</strong> to sync across all devices securely.<br>
+      One-time setup: create a free GitHub token → paste below → done.
+    </div>
+    <div style="background:var(--blue-bg);border:1px solid #b8d4f8;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--blue);line-height:1.8">
+      <strong>How to get your token (2 minutes):</strong><br>
+      1. Go to <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong><br>
+      2. Click <strong>Generate new token (classic)</strong><br>
+      3. Note: "Taskboard sync" → tick <strong>gist</strong> checkbox → Generate<br>
+      4. Copy the token → paste below
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-      <span style="font-size:12px;color:var(--text2);font-weight:500;min-width:80px">Your Bin ID</span>
-      <input id="bin-id-display" style="flex:1;min-width:160px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none" placeholder="Not set up yet…" readonly>
-      <button class="notif-btn" onclick="copyBinId()">📋 Copy ID</button>
+      <span style="font-size:12px;color:var(--text2);font-weight:500;min-width:90px">GitHub Token</span>
+      <input id="gist-token-input" type="password" style="flex:1;min-width:160px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      <button class="notif-btn" onclick="saveToken()" style="background:var(--green)">💾 Save Token</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-      <span style="font-size:12px;color:var(--text2);font-weight:500;min-width:80px">Connect</span>
-      <input id="bin-id-input" style="flex:1;min-width:160px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none" placeholder="Paste Bin ID from another device…">
-      <button class="notif-btn" onclick="connectBin()" style="background:var(--blue)">Connect</button>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="notif-btn" onclick="setupSync()" style="background:var(--green)">🔄 Set Up Sync</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
       <button class="notif-btn" onclick="forcePush()" style="background:var(--text)">⬆️ Push My Data</button>
       <button class="notif-btn" onclick="forcePull()" style="background:var(--text)">⬇️ Pull Latest</button>
     </div>
@@ -1352,13 +1353,11 @@ const TASKS_KEY = 'naj_tasks_v2';
 const TAGS_KEY  = 'naj_custom_tags_v1';
 
 // ══════════════════════════════════════
-// REAL CLOUD SYNC via JSONBin.io
-// Works on GitHub Pages, any browser, any device
+// REAL CLOUD SYNC via GitHub Gist
+// Uses your existing GitHub account — works everywhere
 // ══════════════════════════════════════
-const JSONBIN_API = 'https://api.jsonbin.io/v3';
-const JSONBIN_KEY = '$2a$10$NajTaskboard2026SecretKey'; // will be set on first run
-let BIN_ID = localStorage.getItem('naj_bin_id') || null;
-const MASTER_KEY = '$2a$10$placeholder'; // replaced after bin creation
+let GIST_ID    = localStorage.getItem('naj_gist_id')    || null;
+let GIST_TOKEN = localStorage.getItem('naj_gist_token') || null;
 
 // ── SYNC STATUS ──
 function setSyncStatus(state, label) {
@@ -1370,27 +1369,21 @@ function setSyncStatus(state, label) {
 function getAllData() {
   return { tasks, customTags, deadlines, refCards, version: Date.now() };
 }
-
 function applyAllData(d) {
   if (!d) return;
-  if (d.tasks)      tasks      = d.tasks;
-  if (d.customTags) customTags = d.customTags;
-  if (d.deadlines)  deadlines  = d.deadlines;
-  if (d.refCards)   refCards   = d.refCards;
+  if (Array.isArray(d.tasks))      tasks      = d.tasks;
+  if (Array.isArray(d.customTags)) customTags = d.customTags;
+  if (Array.isArray(d.deadlines))  deadlines  = d.deadlines;
+  if (Array.isArray(d.refCards))   refCards   = d.refCards;
 }
 
-// ── SAVE TO LOCALSTORAGE (instant, always) ──
+// ── LOCAL STORAGE ──
 function saveLocal() {
-  const d = getAllData();
-  localStorage.setItem('naj_all_data_v3', JSON.stringify(d));
-  localStorage.setItem('naj_bin_id', BIN_ID || '');
+  localStorage.setItem('naj_all_data_v3', JSON.stringify(getAllData()));
 }
-
-// ── LOAD FROM LOCALSTORAGE ──
 function loadLocal() {
   const raw = localStorage.getItem('naj_all_data_v3');
   if (raw) { try { applyAllData(JSON.parse(raw)); return true; } catch(e){} }
-  // Fallback: load individual keys from old format
   const lt = localStorage.getItem('naj_tasks_v2');
   const lc = localStorage.getItem('naj_custom_tags_v1');
   const ld = localStorage.getItem('naj_deadlines_v1');
@@ -1402,53 +1395,57 @@ function loadLocal() {
   return false;
 }
 
-// ── JSONBIN: CREATE BIN on first use ──
-async function createBin() {
+// ── GIST: CREATE ──
+async function createGist() {
+  if (!GIST_TOKEN) return false;
   try {
-    const res = await fetch(`${JSONBIN_API}/b`, {
+    const res = await fetch('https://api.github.com/gists', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Bin-Name': 'NajTaskboard' },
-      body: JSON.stringify(getAllData())
+      headers: { 'Authorization': `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: 'NajTaskboard Data',
+        public: false,
+        files: { 'taskboard.json': { content: JSON.stringify(getAllData()) } }
+      })
     });
     const data = await res.json();
-    BIN_ID = data.metadata?.id || data.record?.id || null;
-    if (BIN_ID) {
-      localStorage.setItem('naj_bin_id', BIN_ID);
-      setSyncStatus('synced', 'Cloud ready ✓');
-      showToast('☁️ Cloud sync set up! Share your Bin ID to use on other devices.');
-    }
-  } catch(e) {
-    setSyncStatus('error', 'Local only');
-  }
-}
-
-// ── JSONBIN: PUSH DATA ──
-async function pushToCloud() {
-  if (!BIN_ID) { await createBin(); return; }
-  try {
-    setSyncStatus('syncing', 'Saving…');
-    await fetch(`${JSONBIN_API}/b/${BIN_ID}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(getAllData())
-    });
-    setSyncStatus('synced', 'Synced ✓');
-  } catch(e) {
-    setSyncStatus('error', 'Saved locally');
-  }
-}
-
-// ── JSONBIN: PULL DATA ──
-async function pullFromCloud() {
-  if (!BIN_ID) return false;
-  try {
-    const res  = await fetch(`${JSONBIN_API}/b/${BIN_ID}/latest`);
-    const data = await res.json();
-    if (data.record) {
-      applyAllData(data.record);
-      saveLocal();
+    if (data.id) {
+      GIST_ID = data.id;
+      localStorage.setItem('naj_gist_id', GIST_ID);
+      setSyncStatus('synced', 'Synced ✓');
+      showToast('☁️ Sync ready! Your data is now in the cloud.');
       return true;
     }
+  } catch(e) {}
+  setSyncStatus('error', 'Local only');
+  return false;
+}
+
+// ── GIST: PUSH ──
+async function pushToCloud() {
+  if (!GIST_TOKEN) return;
+  if (!GIST_ID) { await createGist(); return; }
+  try {
+    setSyncStatus('syncing', 'Saving…');
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { 'taskboard.json': { content: JSON.stringify(getAllData()) } } })
+    });
+    setSyncStatus('synced', 'Synced ✓');
+  } catch(e) { setSyncStatus('error', 'Saved locally'); }
+}
+
+// ── GIST: PULL ──
+async function pullFromCloud() {
+  if (!GIST_TOKEN || !GIST_ID) return false;
+  try {
+    const res  = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Authorization': `token ${GIST_TOKEN}` }
+    });
+    const data = await res.json();
+    const content = data.files?.['taskboard.json']?.content;
+    if (content) { applyAllData(JSON.parse(content)); saveLocal(); return true; }
   } catch(e) {}
   return false;
 }
@@ -1456,39 +1453,30 @@ async function pullFromCloud() {
 // ── MAIN LOAD ──
 async function loadData() {
   setSyncStatus('syncing', 'Loading…');
-  // Load local first for instant display
   loadLocal();
   document.getElementById('overlay').style.display = 'none';
-  updateTagDropdown();
-  renderCustomTags();
-  render();
-  // Then try cloud
-  if (BIN_ID) {
+  updateTagDropdown(); renderCustomTags(); render();
+  if (GIST_TOKEN && GIST_ID) {
     const ok = await pullFromCloud();
-    if (ok) {
-      updateTagDropdown(); renderCustomTags(); render();
-      setSyncStatus('synced', 'Synced ✓');
-    } else {
-      setSyncStatus('error', 'Local only');
-    }
+    if (ok) { updateTagDropdown(); renderCustomTags(); render(); setSyncStatus('synced', 'Synced ✓'); }
+    else setSyncStatus('error', 'Local only');
   } else {
-    setSyncStatus('error', 'Local only — set up sync');
+    setSyncStatus('error', 'Local only');
   }
 }
 
 // ── MAIN SAVE ──
 async function saveData() {
-  saveLocal();
-  render();
-  pushToCloud(); // async, non-blocking
+  saveLocal(); render();
+  pushToCloud();
 }
 
-// Poll every 20s
+// Poll every 30s
 setInterval(async () => {
-  if (!BIN_ID) return;
+  if (!GIST_TOKEN || !GIST_ID) return;
   const ok = await pullFromCloud();
   if (ok) { updateTagDropdown(); renderCustomTags(); render(); setSyncStatus('synced', 'Updated ✓'); }
-}, 20000);
+}, 30000);
 
 // ── HELPERS ──
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
@@ -2503,69 +2491,44 @@ function printCalendar() {
 }
 
 // ── SYNC HELPERS ──
-async function setupSync() {
-  const st = document.getElementById('sync-setup-status');
-  st.textContent = 'Setting up…'; st.style.color = 'var(--muted)';
-  await createBin();
-  updateBinUI();
-  st.textContent = BIN_ID ? '✓ Sync ready! Copy your Bin ID and paste it on other devices.' : '⚠ Failed. Check internet connection.';
-  st.style.color = BIN_ID ? 'var(--green)' : 'var(--red)';
-}
-
 function updateBinUI() {
-  const el = document.getElementById('bin-id-display');
-  if (el) el.value = BIN_ID || '';
+  const ti = document.getElementById('gist-token-input');
+  if (ti && GIST_TOKEN) ti.placeholder = 'Token saved ✓';
 }
 
-function copyBinId() {
-  if (!BIN_ID) { showToast('No Bin ID yet — click Set Up Sync first.'); return; }
-  navigator.clipboard.writeText(BIN_ID).then(() => showToast('📋 Bin ID copied!')).catch(()=>{
-    const el = document.getElementById('bin-id-display');
-    if (el) { el.select(); document.execCommand('copy'); showToast('📋 Bin ID copied!'); }
-  });
-}
-
-async function connectBin() {
-  const input = document.getElementById('bin-id-input');
-  const id = (input?.value || '').trim();
-  if (!id) { showToast('Paste a Bin ID first.'); return; }
-  BIN_ID = id;
-  localStorage.setItem('naj_bin_id', BIN_ID);
+function saveToken() {
+  const input = document.getElementById('gist-token-input');
+  const token = (input?.value || '').trim();
+  if (!token || !token.startsWith('ghp_')) { showToast('Please enter a valid GitHub token (starts with ghp_)'); return; }
+  GIST_TOKEN = token;
+  localStorage.setItem('naj_gist_token', GIST_TOKEN);
+  if (input) { input.value = ''; input.placeholder = 'Token saved ✓'; }
   const st = document.getElementById('sync-setup-status');
-  st.textContent = 'Connecting…'; st.style.color = 'var(--muted)';
-  const ok = await pullFromCloud();
-  if (ok) {
-    updateTagDropdown(); renderCustomTags(); render();
-    renderDeadlines(); renderReference();
-    st.textContent = '✓ Connected! All data loaded.'; st.style.color = 'var(--green)';
-    updateBinUI(); if(input) input.value = '';
-    showToast('✓ Synced from cloud!');
-  } else {
-    st.textContent = '⚠ Could not connect. Check the Bin ID.'; st.style.color = 'var(--red)';
-  }
+  st.textContent = 'Token saved! Pushing your data to cloud…'; st.style.color = 'var(--green)';
+  showToast('Token saved! Setting up sync…');
+  forcePush();
 }
 
 async function forcePush() {
   const st = document.getElementById('sync-setup-status');
-  if (!BIN_ID) { await setupSync(); return; }
-  st.textContent = 'Pushing…'; st.style.color = 'var(--muted)';
+  if (!GIST_TOKEN) { showToast('Save your GitHub token first.'); return; }
+  if (st) { st.textContent = 'Pushing…'; st.style.color = 'var(--muted)'; }
   await pushToCloud();
-  st.textContent = '✓ Data pushed to cloud!'; st.style.color = 'var(--green)';
-  showToast('⬆️ Data pushed!');
+  if (st) { st.textContent = '✓ Data pushed to cloud! Open app on other devices and click Pull Latest.'; st.style.color = 'var(--green)'; }
+  showToast('⬆️ Data pushed to cloud!');
 }
 
 async function forcePull() {
   const st = document.getElementById('sync-setup-status');
-  if (!BIN_ID) { st.textContent = 'No Bin ID — click Set Up Sync first.'; st.style.color = 'var(--red)'; return; }
-  st.textContent = 'Pulling…'; st.style.color = 'var(--muted)';
+  if (!GIST_TOKEN) { if(st){st.textContent='Save your GitHub token first.';st.style.color='var(--red)';} return; }
+  if (st) { st.textContent = 'Pulling…'; st.style.color = 'var(--muted)'; }
   const ok = await pullFromCloud();
   if (ok) {
-    updateTagDropdown(); renderCustomTags(); render();
-    renderDeadlines(); renderReference();
-    st.textContent = '✓ Latest data loaded!'; st.style.color = 'var(--green)';
+    updateTagDropdown(); renderCustomTags(); render(); renderDeadlines(); renderReference();
+    if (st) { st.textContent = '✓ Latest data loaded!'; st.style.color = 'var(--green)'; }
     showToast('⬇️ Data pulled from cloud!');
   } else {
-    st.textContent = '⚠ Could not pull. Check connection.'; st.style.color = 'var(--red)';
+    if (st) { st.textContent = '⚠ Could not pull. Check token and connection.'; st.style.color = 'var(--red)'; }
   }
 }
 
