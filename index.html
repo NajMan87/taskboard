@@ -4,6 +4,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#f5f2ed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TaskBoard">
 <title>Naj's Taskboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1071,6 +1075,162 @@ header {
   .cl-sticky-head { top:95px; padding:10px 14px 10px; }
   .cl-scroll-body { padding:12px 14px 28px; }
   .cl-progress-pct { font-size:20px; }
+}
+
+
+/* ══════════════════════════════════════
+   MOBILE OPTIMISATION (< 768px)
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── HEADER ── */
+  header {
+    padding: 0 12px;
+    height: 52px;
+    gap: 8px;
+  }
+  .logo { font-size: 20px; }
+  .sync-pill { display: none; }
+  .hdr-div { display: none; }
+  .hdr-stat { display: none; }
+  .hdr-btn span { display: none; }
+  .hdr-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* ── TAB BAR ── */
+  .tab-bar {
+    position: sticky;
+    top: 52px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    display: flex;
+    padding: 0 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 10px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  /* ── STICKY HEADS ── */
+  .dl-sticky-head  { top: 95px; padding: 10px 12px 8px; }
+  .cl-sticky-head  { top: 95px; padding: 10px 12px 8px; }
+  .ref-sticky-head { top: 95px; padding: 10px 12px 8px; }
+
+  /* ── DROP ZONE ── */
+  .drop-zone { margin: 10px 12px; padding: 12px; }
+  #drop-input { font-size: 14px; min-height: 70px; }
+  .drop-row2 { flex-direction: column; gap: 8px; }
+  .drop-field input, .drop-field select { font-size: 14px; padding: 8px 10px; }
+  .drop-actions { margin-left: 0; width: 100%; }
+  .btn-parse { width: 100%; justify-content: center; padding: 12px; font-size: 15px; }
+  .btn-single { width: 100%; text-align: center; padding: 10px; }
+  .parse-hint { display: none; }
+
+  /* ── TAG MANAGER ── */
+  .tag-manager { margin: 0 12px 10px; }
+  .add-tag-form input { width: 90px; }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    padding: 0 12px 10px;
+    gap: 5px;
+  }
+  .filter-btn { padding: 5px 10px; font-size: 11px; }
+  .search-wrap { margin-left: 0; width: 100%; margin-top: 6px; }
+  .search-wrap input { width: 100%; }
+
+  /* ── BOARD ── */
+  .board {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 0 12px 20px;
+  }
+  .column { min-height: 120px; padding: 12px; }
+  .col-title { font-size: 11px; }
+
+  /* ── TASK CARDS ── */
+  .task-card { padding: 12px; }
+  .task-title { font-size: 13px; }
+  .card-menu-btn { opacity: 1; } /* always visible on mobile */
+  .tag { font-size: 10px; }
+  .prio { font-size: 10px; }
+
+  /* ── CALENDAR ── */
+  .calendar-wrap { padding: 12px; }
+  .cal-day { min-height: 52px; padding: 4px 3px; }
+  .day-num { font-size: 11px; }
+  .cal-task-dot { font-size: 9px; padding: 1px 3px; }
+  .cal-wd { font-size: 9px; padding: 7px 2px; }
+  .cal-title { font-size: 17px; }
+  .cal-nav { padding: 4px 10px; font-size: 12px; }
+  .upcoming-item { flex-direction: column; gap: 5px; }
+  .upcoming-date { min-width: unset; width: fit-content; }
+
+  /* ── DEADLINE TRACKER ── */
+  .dl-grid { grid-template-columns: 1fr; }
+  .dl-scroll-body { padding: 10px 12px 24px; }
+  .dl-topbar { gap: 8px; }
+  .dl-heading { font-size: 18px; }
+  .btn-add-dl { padding: 7px 14px; font-size: 13px; }
+  .dl-pill { font-size: 10px; padding: 4px 10px; }
+  .dl-card-title { font-size: 13px; }
+  .dl-status-sel { font-size: 10px; }
+  .dl-add-check { flex-direction: column; }
+  .dl-add-check input { width: 100%; }
+  .dl-form-row { grid-template-columns: 1fr; }
+
+  /* ── REFERENCE LIBRARY ── */
+  .ref-grid { grid-template-columns: 1fr; }
+  .ref-scroll-body { padding: 10px 12px 24px; }
+  .ref-heading { font-size: 18px; }
+  .ref-search { width: 130px; }
+  .ref-notes-area { font-size: 13px; }
+
+  /* ── CHECKLISTS ── */
+  .cl-scroll-body { padding: 10px 12px 24px; }
+  .cl-heading { font-size: 18px; }
+  .cl-actions { gap: 5px; }
+  .cl-btn { padding: 6px 10px; font-size: 11px; }
+  .cl-section-title { font-size: 11px; }
+  .cl-item-text { font-size: 13px; }
+  .cl-progress-pct { font-size: 20px; }
+  .cl-progress-wrap { padding: 12px; }
+
+  /* ── MODALS ── */
+  .modal { padding: 18px; }
+  .dl-modal { padding: 18px; }
+  .ref-modal { padding: 18px; }
+  .snooze-options { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .snooze-btn { padding: 8px 4px; font-size: 11px; }
+
+  /* ── NOTIFICATIONS ── */
+  .notif-panel { margin: 12px 12px 0; padding: 14px; }
+  .notif-row { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .notif-label { min-width: unset; }
+
+  /* ── CONTEXT MENUS ── */
+  .ctx-menu { min-width: 160px; }
+  .ctx-item { padding: 10px 12px; font-size: 13px; }
+
+  /* ── TOAST ── */
+  .toast { font-size: 13px; padding: 10px 16px; max-width: 90vw; white-space: normal; text-align: center; }
+
+  /* ── OVERDUE BANNER ── */
+  .overdue-banner { padding: 8px 12px; font-size: 11px; }
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+  .tab-btn { padding: 9px 10px; font-size: 11px; }
+  .logo { font-size: 18px; }
+  .board { padding: 0 8px 16px; }
+  .drop-zone { margin: 8px; }
+  .cl-btn { font-size: 10px; padding: 5px 8px; }
 }
 
 </style>
