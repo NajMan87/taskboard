@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -382,7 +381,6 @@
     currentSize = Math.min(MAX, Math.max(MIN, currentSize + delta));
     document.getElementById('note').style.fontSize = currentSize + 'px';
     document.getElementById('fontSize').textContent = currentSize + 'px';
-    // Dim buttons at limits
     document.querySelectorAll('.font-btn').forEach((btn, i) => {
       btn.style.opacity = (i === 0 && currentSize === MIN) || (i === 1 && currentSize === MAX) ? '0.35' : '1';
     });
