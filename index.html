@@ -2026,7 +2026,7 @@ function addSingle() {
   if (!input) { showToast('Type something first.'); return; }
   const deadline = document.getElementById('drop-deadline').value;
   const tag      = document.getElementById('drop-tag').value;
-  const priority = document.getElementById('drop-priority').value;
+  const priority = dropPrio;
   tasks.unshift({ id:uid(), title:input, priority, tag, deadline:deadline||'', status:'todo', date:todayStr() });
   document.getElementById('drop-input').value = '';
   document.getElementById('drop-deadline').value = '';
