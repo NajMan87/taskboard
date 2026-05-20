@@ -3038,7 +3038,7 @@ function switchTab(name, btn) {
   if (name === 'notifications') renderSnoozedList();
   if (name === 'deadlines')     renderDeadlines();
   if (name === 'reference')     renderReference();
-  if (name === 'monthend')      renderChecklist('me');
+  if (name === 'monthend')      renderChecklist('me');       if (name === 'notes')         { if (!notesCtx) initNotes(); }
   if (name === 'yearend')       renderChecklist('ye');
 }
 
