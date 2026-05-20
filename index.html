@@ -1287,7 +1287,7 @@ header {
 
 <!-- DROP ZONE -->
 <div class="drop-zone">
-  <div class="drop-label">⚡ Drop your sticky note / message here</div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;justify-content:flex-end"><span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted)">Font</span><button onclick="chgFont(-1)" style="width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:15px;font-weight:600">−</button><span id="fsize" style="font-size:11px;font-weight:600;color:var(--gold);min-width:30px;text-align:center">14px</span><button onclick="chgFont(1)" style="width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:15px;font-weight:600">+</button></div>
   <textarea id="drop-input" placeholder="e.g. 'Check Palombini invoice for Rome, also reconcile NL VAT Q1, urgent' — AI splits into tasks automatically"></textarea>
   <div class="drop-row2">
     <div class="drop-field">
@@ -1302,14 +1302,6 @@ header {
         <option value="finance">Finance</option>
         <option value="procurement">Procurement</option>
         <option value="audit">Audit</option>
-      </select>
-    </div>
-    <div class="drop-field">
-      <label>Priority</label>
-      <select id="drop-priority">
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-        <option value="low">Low</option>
       </select>
     </div>
     <div class="drop-actions">
@@ -1978,7 +1970,7 @@ async function aiParse() {
   if (!input) { showToast('Type something first.'); return; }
   const deadline = document.getElementById('drop-deadline').value;
   const tag      = document.getElementById('drop-tag').value;
-  const priority = document.getElementById('drop-priority').value;
+  const priority = dropPrio;
 
   const btn = document.getElementById('parse-btn');
   const inner = document.getElementById('parse-inner');
