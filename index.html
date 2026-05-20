@@ -1691,7 +1691,8 @@ header {
 <div class="toast" id="toast"></div>
 
 <script>
-// ── STATE ──
+let dropPrio='medium'; let fs=14; function chgFont(d){fs=Math.min(20,Math.max(11,fs+d));document.getElementById('drop-input').style.fontSize=fs+'px';document.getElementById('fsize').textContent=fs+'px';}
+  // ── STATE ──
 let tasks = [];
 let customTags = [];
 let currentFilter = 'all';
