@@ -295,6 +295,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .dl-list-row.overdue:hover { background: #ffe6e1; }
 .dl-list-row.submitted { opacity: .6; }
 .dl-list-status { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .4px; text-align: center; }
+.dl-list-status-sel { font-size: 10px; font-weight: 700; padding: 4px 6px; border-radius: 4px; border: none; text-transform: uppercase; letter-spacing: .4px; cursor: pointer; font-family: 'DM Sans', sans-serif; outline: none; width: 100%; }
+.dl-list-status-sel.pending { background: #fff8ee; color: var(--gold); }
+.dl-list-status-sel.working { background: var(--blue-bg); color: var(--blue); }
+.dl-list-status-sel.submitted { background: var(--green-bg); color: var(--green); }
+.dl-list-status-sel.overdue { background: var(--red-bg); color: var(--red); }
 .dl-list-status.pending { background: #fff8ee; color: var(--gold); }
 .dl-list-status.working { background: var(--blue-bg); color: var(--blue); }
 .dl-list-status.submitted { background: var(--green-bg); color: var(--green); }
@@ -2149,8 +2154,13 @@ function renderDlListRow(dl) {
   const repeatBadge = (dl.repeat && dl.repeat !== 'none') ? `<span class="dl-repeat-badge" title="Recurring">🔄</span>` : '';
   const tagCls = 'tag-' + (dl.tag||'general');
   return `
-  <div class="dl-list-row ${isOverdue?'overdue':''} ${dl.status==='submitted'?'submitted':''}" onclick="openDlModal('${dl.id}')">
-    <span class="dl-list-status ${dl.status}">${dl.status}</span>
+  <div class="dl-list-row ${isOverdue?'overdue':''} ${dl.status==='submitted'?'submitted':''}" onclick="viewDlInCardMode('${dl.id}')" title="Click to view full details">
+    <select class="dl-list-status-sel ${dl.status}" onclick="event.stopPropagation()" onchange="changeDlStatus('${dl.id}',this.value)" title="Change status">
+      <option value="pending" ${dl.status==='pending'?'selected':''}>⏳ Pending</option>
+      <option value="working" ${dl.status==='working'?'selected':''}>🔵 Working</option>
+      <option value="submitted" ${dl.status==='submitted'?'selected':''}>✅ Submitted</option>
+      <option value="overdue" ${dl.status==='overdue'?'selected':''}>🔴 Overdue</option>
+    </select>
     <div class="dl-list-title-wrap">
       <div class="dl-list-title">${esc(dl.title)}</div>
       ${dl.ref ? `<div class="dl-list-ref">${esc(dl.ref)}</div>` : ''}
@@ -2158,10 +2168,39 @@ function renderDlListRow(dl) {
     <span class="dl-list-due ${ds}">${dueLabel}</span>
     <span class="dl-list-tag dl-tag-badge ${tagCls}">${dl.tag||'general'}${repeatBadge?' '+repeatBadge:''}</span>
     <div class="dl-list-actions">
-      <button class="dl-del-btn" onclick="event.stopPropagation();openDlModal('${dl.id}')" title="Edit">✏️</button>
+      <button class="dl-del-btn" onclick="event.stopPropagation();openDlModal('${dl.id}')" title="Edit details">✏️</button>
       <button class="dl-del-btn" onclick="event.stopPropagation();deleteDl('${dl.id}')" title="Delete">🗑</button>
     </div>
   </div>`;
+}
+
+// View mode: switch to card view and scroll to this deadline (expanded, highlighted)
+function viewDlInCardMode(id) {
+  // Switch to card view
+  if (dlViewMode === 'list') {
+    dlViewMode = 'card';
+    localStorage.setItem('naj_dl_view', dlViewMode);
+  }
+  // Make sure this specific card is expanded
+  dlCardCollapsed = dlCardCollapsed.filter(x => x !== id);
+  localStorage.setItem('naj_dl_cards', JSON.stringify(dlCardCollapsed));
+  // Make sure the group it lives in is expanded too
+  const dl = deadlines.find(x => x.id === id);
+  if (dl) {
+    const groupKey = (dl.status !== 'submitted' && dlDeadlineStatus(dl.date, dl.status) === 'overdue') ? 'overdue' : dl.status;
+    dlGroupCollapsed = dlGroupCollapsed.filter(k => k !== groupKey);
+    localStorage.setItem('naj_dl_groups', JSON.stringify(dlGroupCollapsed));
+  }
+  renderDeadlines();
+  // Scroll to and briefly highlight the card
+  setTimeout(() => {
+    const card = document.getElementById('dlcard-' + id);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.style.boxShadow = '0 0 0 3px var(--gold)';
+      setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+    }
+  }, 120);
 }
 
 // View toggle: card <-> list
