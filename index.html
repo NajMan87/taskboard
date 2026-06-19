@@ -259,6 +259,60 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .dl-card.status-submitted { border-left:4px solid var(--green); opacity:.75; }
 .dl-card.status-working { border-left:4px solid var(--blue); }
 .dl-card.status-pending { border-left:4px solid var(--gold); }
+
+/* View toggle */
+.dl-view-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text2); padding: 7px 14px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+.dl-view-toggle:hover { background: var(--bg2); color: var(--text); }
+.dl-view-toggle.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+
+/* Status groups */
+.dl-group { margin-bottom: 18px; }
+.dl-group-header { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px; transition: background .15s; user-select: none; }
+.dl-group-header:hover { background: var(--bg2); }
+.dl-group-header.pending { border-left: 4px solid var(--gold); }
+.dl-group-header.working { border-left: 4px solid var(--blue); }
+.dl-group-header.submitted { border-left: 4px solid var(--green); }
+.dl-group-header.overdue { border-left: 4px solid var(--red); }
+.dl-group-toggle { font-size: 11px; color: var(--muted); transition: transform .2s; display: inline-block; }
+.dl-group-toggle.collapsed { transform: rotate(-90deg); }
+.dl-group-label { font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .5px; }
+.dl-group-count { background: var(--bg2); color: var(--text2); padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 4px; }
+.dl-group-header.collapsed .dl-group-count { background: var(--gold-bg); color: var(--gold); }
+
+/* Per-card collapse */
+.dl-card-head { cursor: pointer; }
+.dl-card-collapse-arrow { font-size: 11px; color: var(--muted); transition: transform .2s; flex-shrink: 0; padding: 0 4px; }
+.dl-card.collapsed .dl-card-collapse-arrow { transform: rotate(-90deg); }
+.dl-card.collapsed .dl-card-body,
+.dl-card.collapsed .dl-card-foot { display: none; }
+
+/* List view */
+.dl-list-view { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.dl-list-row { display: grid; grid-template-columns: 110px minmax(0,1fr) auto auto auto; gap: 12px; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--bg2); cursor: pointer; transition: background .1s; }
+.dl-list-row:hover { background: var(--bg); }
+.dl-list-row:last-child { border-bottom: none; }
+.dl-list-row.overdue { background: var(--over-bg); }
+.dl-list-row.overdue:hover { background: #ffe6e1; }
+.dl-list-row.submitted { opacity: .6; }
+.dl-list-status { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .4px; text-align: center; }
+.dl-list-status.pending { background: #fff8ee; color: var(--gold); }
+.dl-list-status.working { background: var(--blue-bg); color: var(--blue); }
+.dl-list-status.submitted { background: var(--green-bg); color: var(--green); }
+.dl-list-status.overdue { background: var(--red-bg); color: var(--red); }
+.dl-list-title-wrap { min-width: 0; }
+.dl-list-title { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-list-ref { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-list-due { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
+.dl-list-due.ok { background: var(--blue-bg); color: var(--blue); }
+.dl-list-due.soon { background: #fff8ee; color: var(--gold); }
+.dl-list-due.overdue { background: var(--red-bg); color: var(--red); }
+.dl-list-due.done { background: var(--green-bg); color: var(--green); }
+.dl-list-actions { display: flex; gap: 4px; }
+.dl-list-actions .dl-del-btn { padding: 4px 8px; }
+@media (max-width: 768px) {
+  .dl-list-row { grid-template-columns: 80px 1fr auto; padding: 10px; gap: 8px; }
+  .dl-list-row > .dl-list-tag, .dl-list-row > .dl-list-actions { display: none; }
+}
 .dl-card.drag-over { border:2px dashed var(--blue); background:var(--blue-bg); }
 .dl-card-head { padding:14px 14px 10px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:10px; }
 .dl-card-title { font-size:14px; font-weight:600; color:var(--text); flex:1; line-height:1.4; }
@@ -658,6 +712,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="dl-sticky-head">
       <div class="dl-topbar">
         <div class="dl-heading">🗓 Deadline Tracker</div>
+        <button class="dl-view-toggle" id="dl-view-toggle-btn" onclick="toggleDlView()" title="Switch between Card and List view">📋 List View</button>
         <button class="btn-add-dl" onclick="openDlModal()">+ Add Deadline</button>
       </div>
       <div class="dl-summary" id="dl-summary"></div>
@@ -1082,6 +1137,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 // ════════════════════════════════════════
 let tasks = [], customTags = [], deadlines = [], refCards = [], contacts = [], lessons = [], auditTrail = [];
 let currentFilter = 'all', activeMenu = null, dlFilter = 'all', quickFilter = '';
+// Deadline view preferences (persisted in localStorage)
+let dlViewMode = localStorage.getItem('naj_dl_view') || 'card'; // 'card' or 'list'
+let dlGroupCollapsed = (function(){ try { return JSON.parse(localStorage.getItem('naj_dl_groups')||'["submitted"]'); } catch(e){ return ['submitted']; } })();
+let dlCardCollapsed = (function(){ try { return JSON.parse(localStorage.getItem('naj_dl_cards')||'[]'); } catch(e){ return []; } })();
 let editingTaskId = null, editingDlId = null, submittingDlId = null, editingContactId = null;
 let mgrFilterBoard = false, mgrFilterME = false, mgrFilterYE = false;
 let selectedEmoji = '📋';
@@ -1961,81 +2020,184 @@ function renderDeadlines() {
   });
   const grid = document.getElementById('dl-grid');
   if (!grid) return;
+  // Update view toggle button label
+  const vtBtn = document.getElementById('dl-view-toggle-btn');
+  if (vtBtn) vtBtn.textContent = (dlViewMode === 'list') ? '🗂 Card View' : '📋 List View';
   if (!shown.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:13px;">No deadlines found. Click <strong>+ Add Deadline</strong> to get started.</div>`;
+    grid.style.display = 'block';
     return;
   }
-  grid.innerHTML = shown.map(dl => {
-    const ds = dlDeadlineStatus(dl.date, dl.status);
-    const badge = dlDueBadgeLabel(dl.date, dl.status);
-    const tagCls = 'tag-' + (dl.tag||'general');
-    const checklist = dl.checklist || [];
-    const doneCount = checklist.filter(c=>c.done).length;
-    const pct = checklist.length ? Math.round(doneCount/checklist.length*100) : 0;
-    const checklistHtml = checklist.length ? `
-      <div class="dl-checklist-head">Checklist
-        <div class="dl-check-progress"><div class="dl-check-progress-bar" style="width:${pct}%"></div></div>
-        <span class="dl-check-pct">${doneCount}/${checklist.length}</span>
+  // LIST VIEW
+  if (dlViewMode === 'list') {
+    grid.style.display = 'block';
+    grid.innerHTML = `<div class="dl-list-view">${shown.map(dl => renderDlListRow(dl)).join('')}</div>`;
+    return;
+  }
+  // CARD VIEW
+  grid.style.display = '';
+  // If a specific status filter is active (not 'all'), show flat list of cards (no group headers)
+  if (dlFilter !== 'all') {
+    grid.innerHTML = shown.map(dl => renderDlCard(dl)).join('');
+    return;
+  }
+  // 'All' filter — group by status. Compute groups from `shown` (which may already be quick-filtered).
+  const groups = [
+    { key: 'overdue',   label: '🔴 Overdue',   items: shown.filter(d => d.status !== 'submitted' && dlDeadlineStatus(d.date, d.status) === 'overdue') },
+    { key: 'pending',   label: '⏳ Pending',   items: shown.filter(d => d.status === 'pending'  && dlDeadlineStatus(d.date, d.status) !== 'overdue') },
+    { key: 'working',   label: '🔵 Working',   items: shown.filter(d => d.status === 'working'  && dlDeadlineStatus(d.date, d.status) !== 'overdue') },
+    { key: 'submitted', label: '✅ Submitted', items: shown.filter(d => d.status === 'submitted') }
+  ];
+  let html = '';
+  groups.forEach(g => {
+    if (!g.items.length) return;
+    const isCollapsed = dlGroupCollapsed.includes(g.key);
+    html += `<div class="dl-group">
+      <div class="dl-group-header ${g.key} ${isCollapsed?'collapsed':''}" onclick="toggleDlGroup('${g.key}')">
+        <span class="dl-group-toggle ${isCollapsed?'collapsed':''}">▼</span>
+        <span class="dl-group-label">${g.label}</span>
+        <span class="dl-group-count">${g.items.length}</span>
       </div>
-      ${checklist.map(c=>`
-        <div class="dl-check-item">
-          <div class="dl-chk ${c.done?'done':''}" onclick="toggleDlCheck('${dl.id}','${c.id}')"></div>
-          <span class="dl-check-text ${c.done?'done':''}">${esc(c.text)}</span>
-          <button class="dl-check-del" onclick="delDlCheckItem('${dl.id}','${c.id}')">✕</button>
-        </div>`).join('')}
-    ` : `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">No checklist items yet.</div>`;
-    const refHtml = dl.ref ? `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:6px 8px;background:var(--bg);border-radius:5px;">${esc(dl.ref)}</div>` : '';
-    const repeatBadge = (dl.repeat && dl.repeat !== 'none') ?
-      `<span class="dl-repeat-badge">🔄 ${dl.repeat==='custom'?'Every '+(dl.customMonths||2)+'mo':dl.repeat}</span>` : '';
-    const atts = dl.attachments || [];
-    const attHtml = `
-      <div class="dl-attach-section" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');attachFilesToDeadline('${dl.id}',event.dataTransfer.files)">
-        <div class="dl-attach-head">📎 Attachments (${atts.length})
-          <button class="dl-attach-btn" onclick="pickFiles('${dl.id}')" style="margin-left:auto">+ Add File</button>
-        </div>
-        ${atts.length ? `<div class="dl-attach-list">${atts.map(a=>`
-          <div class="dl-attach-item">
-            <a href="${esc(a.link)}" target="_blank">📄 ${esc(a.name)}</a>
-            <button class="dl-attach-del" onclick="removeAttachment('${dl.id}','${a.id}')">✕</button>
-          </div>`).join('')}</div>` : ''}
-        <div class="dl-attach-hint">Drag & drop files here, or click + Add File</div>
-      </div>`;
-    return `
-    <div class="dl-card status-${dl.status}" id="dlcard-${dl.id}">
-      <div class="dl-card-head">
-        <div style="flex:1">
-          <div class="dl-card-title">${esc(dl.title)}</div>
-          <div class="dl-card-meta">
-            <select class="dl-status-sel ${dl.status}" onchange="changeDlStatus('${dl.id}',this.value)" onclick="event.stopPropagation()">
-              <option value="pending" ${dl.status==='pending'?'selected':''}>⏳ Pending</option>
-              <option value="working" ${dl.status==='working'?'selected':''}>🔵 Working</option>
-              <option value="submitted" ${dl.status==='submitted'?'selected':''}>✅ Submitted</option>
-              <option value="overdue" ${dl.status==='overdue'?'selected':''}>🔴 Overdue</option>
-            </select>
-            <span class="dl-due-badge ${ds}">${badge}</span>
-            <span class="dl-tag-badge ${tagCls}">${dl.tag||'general'}</span>
-            ${repeatBadge}
-          </div>
-        </div>
-      </div>
-      <div class="dl-card-body">
-        ${refHtml}
-        ${checklistHtml}
-        <div class="dl-add-check">
-          <input id="dl-ci-${dl.id}" placeholder="Add checklist item…" onkeydown="if(event.key==='Enter')addDlCheckItem('${dl.id}')">
-          <button onclick="addDlCheckItem('${dl.id}')">+ Add</button>
-        </div>
-        <div class="dl-notes-head">Notes</div>
-        <textarea class="dl-notes-area" id="dl-notes-${dl.id}" placeholder="Reference files, contacts, important details…" oninput="autoSaveDlNotes('${dl.id}')" onblur="flushDlNotes('${dl.id}')">${esc(dl.notes||'')}</textarea>
-        ${attHtml}
-      </div>
-      <div class="dl-card-foot">
-        <span class="dl-foot-date">Added ${dl.created||''}</span>
-        <button class="dl-del-btn" onclick="openDlModal('${dl.id}')">✏️ Edit</button>
-        <button class="dl-del-btn" onclick="deleteDl('${dl.id}')">🗑 Delete</button>
-      </div>
+      ${isCollapsed ? '' : `<div class="dl-group-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
+        ${g.items.map(dl => renderDlCard(dl)).join('')}
+      </div>`}
     </div>`;
-  }).join('');
+  });
+  grid.innerHTML = html;
+}
+
+// Render a single deadline card (extracted for reuse)
+function renderDlCard(dl) {
+  const ds = dlDeadlineStatus(dl.date, dl.status);
+  const badge = dlDueBadgeLabel(dl.date, dl.status);
+  const tagCls = 'tag-' + (dl.tag||'general');
+  const checklist = dl.checklist || [];
+  const doneCount = checklist.filter(c=>c.done).length;
+  const pct = checklist.length ? Math.round(doneCount/checklist.length*100) : 0;
+  const isCollapsed = dlCardCollapsed.includes(dl.id);
+  const checklistHtml = checklist.length ? `
+    <div class="dl-checklist-head">Checklist
+      <div class="dl-check-progress"><div class="dl-check-progress-bar" style="width:${pct}%"></div></div>
+      <span class="dl-check-pct">${doneCount}/${checklist.length}</span>
+    </div>
+    ${checklist.map(c=>`
+      <div class="dl-check-item">
+        <div class="dl-chk ${c.done?'done':''}" onclick="toggleDlCheck('${dl.id}','${c.id}')"></div>
+        <span class="dl-check-text ${c.done?'done':''}">${esc(c.text)}</span>
+        <button class="dl-check-del" onclick="delDlCheckItem('${dl.id}','${c.id}')">✕</button>
+      </div>`).join('')}
+  ` : `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">No checklist items yet.</div>`;
+  const refHtml = dl.ref ? `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:6px 8px;background:var(--bg);border-radius:5px;">${esc(dl.ref)}</div>` : '';
+  const repeatBadge = (dl.repeat && dl.repeat !== 'none') ?
+    `<span class="dl-repeat-badge">🔄 ${dl.repeat==='custom'?'Every '+(dl.customMonths||2)+'mo':dl.repeat}</span>` : '';
+  const atts = dl.attachments || [];
+  const attHtml = `
+    <div class="dl-attach-section" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');attachFilesToDeadline('${dl.id}',event.dataTransfer.files)">
+      <div class="dl-attach-head">📎 Attachments (${atts.length})
+        <button class="dl-attach-btn" onclick="pickFiles('${dl.id}')" style="margin-left:auto">+ Add File</button>
+      </div>
+      ${atts.length ? `<div class="dl-attach-list">${atts.map(a=>`
+        <div class="dl-attach-item">
+          <a href="${esc(a.link)}" target="_blank">📄 ${esc(a.name)}</a>
+          <button class="dl-attach-del" onclick="removeAttachment('${dl.id}','${a.id}')">✕</button>
+        </div>`).join('')}</div>` : ''}
+      <div class="dl-attach-hint">Drag & drop files here, or click + Add File</div>
+    </div>`;
+  return `
+  <div class="dl-card status-${dl.status} ${isCollapsed?'collapsed':''}" id="dlcard-${dl.id}">
+    <div class="dl-card-head" onclick="toggleDlCard('${dl.id}', event)">
+      <div style="flex:1">
+        <div class="dl-card-title">${esc(dl.title)}</div>
+        <div class="dl-card-meta">
+          <select class="dl-status-sel ${dl.status}" onchange="changeDlStatus('${dl.id}',this.value)" onclick="event.stopPropagation()">
+            <option value="pending" ${dl.status==='pending'?'selected':''}>⏳ Pending</option>
+            <option value="working" ${dl.status==='working'?'selected':''}>🔵 Working</option>
+            <option value="submitted" ${dl.status==='submitted'?'selected':''}>✅ Submitted</option>
+            <option value="overdue" ${dl.status==='overdue'?'selected':''}>🔴 Overdue</option>
+          </select>
+          <span class="dl-due-badge ${ds}">${badge}</span>
+          <span class="dl-tag-badge ${tagCls}">${dl.tag||'general'}</span>
+          ${repeatBadge}
+        </div>
+      </div>
+      <span class="dl-card-collapse-arrow">▼</span>
+    </div>
+    <div class="dl-card-body">
+      ${refHtml}
+      ${checklistHtml}
+      <div class="dl-add-check">
+        <input id="dl-ci-${dl.id}" placeholder="Add checklist item…" onkeydown="if(event.key==='Enter')addDlCheckItem('${dl.id}')">
+        <button onclick="addDlCheckItem('${dl.id}')">+ Add</button>
+      </div>
+      <div class="dl-notes-head">Notes</div>
+      <textarea class="dl-notes-area" id="dl-notes-${dl.id}" placeholder="Reference files, contacts, important details…" oninput="autoSaveDlNotes('${dl.id}')" onblur="flushDlNotes('${dl.id}')">${esc(dl.notes||'')}</textarea>
+      ${attHtml}
+    </div>
+    <div class="dl-card-foot">
+      <span class="dl-foot-date">Added ${dl.created||''}</span>
+      <button class="dl-del-btn" onclick="openDlModal('${dl.id}')">✏️ Edit</button>
+      <button class="dl-del-btn" onclick="deleteDl('${dl.id}')">🗑 Delete</button>
+    </div>
+  </div>`;
+}
+
+// Render a single deadline as a compact list row
+function renderDlListRow(dl) {
+  const ds = dlDeadlineStatus(dl.date, dl.status);
+  const dueLabel = dlDueBadgeLabel(dl.date, dl.status);
+  const isOverdue = (ds === 'overdue' && dl.status !== 'submitted');
+  const repeatBadge = (dl.repeat && dl.repeat !== 'none') ? `<span class="dl-repeat-badge" title="Recurring">🔄</span>` : '';
+  const tagCls = 'tag-' + (dl.tag||'general');
+  return `
+  <div class="dl-list-row ${isOverdue?'overdue':''} ${dl.status==='submitted'?'submitted':''}" onclick="openDlModal('${dl.id}')">
+    <span class="dl-list-status ${dl.status}">${dl.status}</span>
+    <div class="dl-list-title-wrap">
+      <div class="dl-list-title">${esc(dl.title)}</div>
+      ${dl.ref ? `<div class="dl-list-ref">${esc(dl.ref)}</div>` : ''}
+    </div>
+    <span class="dl-list-due ${ds}">${dueLabel}</span>
+    <span class="dl-list-tag dl-tag-badge ${tagCls}">${dl.tag||'general'}${repeatBadge?' '+repeatBadge:''}</span>
+    <div class="dl-list-actions">
+      <button class="dl-del-btn" onclick="event.stopPropagation();openDlModal('${dl.id}')" title="Edit">✏️</button>
+      <button class="dl-del-btn" onclick="event.stopPropagation();deleteDl('${dl.id}')" title="Delete">🗑</button>
+    </div>
+  </div>`;
+}
+
+// View toggle: card <-> list
+function toggleDlView() {
+  dlViewMode = (dlViewMode === 'card') ? 'list' : 'card';
+  localStorage.setItem('naj_dl_view', dlViewMode);
+  renderDeadlines();
+}
+
+// Group collapse (overdue/pending/working/submitted)
+function toggleDlGroup(key) {
+  if (dlGroupCollapsed.includes(key)) {
+    dlGroupCollapsed = dlGroupCollapsed.filter(k => k !== key);
+  } else {
+    dlGroupCollapsed.push(key);
+  }
+  localStorage.setItem('naj_dl_groups', JSON.stringify(dlGroupCollapsed));
+  renderDeadlines();
+}
+
+// Per-card collapse — but ignore clicks on form controls inside the header
+function toggleDlCard(id, e) {
+  if (e && e.target) {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (['select','option','input','button','textarea','a'].includes(tag)) return;
+    if (e.target.closest && e.target.closest('select,input,button,textarea,a')) return;
+  }
+  if (dlCardCollapsed.includes(id)) {
+    dlCardCollapsed = dlCardCollapsed.filter(x => x !== id);
+  } else {
+    dlCardCollapsed.push(id);
+  }
+  localStorage.setItem('naj_dl_cards', JSON.stringify(dlCardCollapsed));
+  // Toggle in place without full re-render to avoid losing focus on textarea
+  const cardEl = document.getElementById('dlcard-' + id);
+  if (cardEl) cardEl.classList.toggle('collapsed');
 }
 
 // ════════════════════════════════════════
