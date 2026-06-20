@@ -782,7 +782,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
       <div class="dl-form-field">
         <label class="dl-form-label">Tag</label>
-        <select class="dl-form-select" id="dl-f-tag">
+        <select class="dl-form-select" id="dl-f-tag" onchange="onDlTagChange(this)">
           <option value="vat">VAT</option>
           <option value="finance">Finance</option>
           <option value="audit">Audit</option>
@@ -800,28 +800,26 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <option value="quarterly">Quarterly (every 3 months)</option>
           <option value="custom">Custom</option>
         </select>
+        <div id="dl-f-custom-wrap" style="display:none;margin-top:8px">
+          <label class="dl-form-label" style="font-size:10px">Every (months)</label>
+          <input class="dl-form-input" id="dl-f-custom-months" type="number" min="1" max="24" value="2">
+        </div>
       </div>
-      <div class="dl-form-field" id="dl-f-custom-wrap" style="display:none">
-        <label class="dl-form-label">Every (months)</label>
-        <input class="dl-form-input" id="dl-f-custom-months" type="number" min="1" max="24" value="2">
+      <div class="dl-form-field">
+        <label class="dl-form-label">Period (what this covers)</label>
+        <input class="dl-form-input" id="dl-f-period" placeholder="e.g. June 2026, Q2 2026">
+      </div>
+    </div>
+    <div class="dl-form-field" style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--purple-bg);border-radius:7px;border:1px solid #d4c0e6;margin-bottom:13px">
+      <input type="checkbox" id="dl-f-period-auto" checked style="margin:2px 0 0 0;cursor:pointer;flex-shrink:0;width:16px;height:16px">
+      <div onclick="var c=document.getElementById('dl-f-period-auto');c.checked=!c.checked" style="cursor:pointer;flex:1">
+        <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px">🔄 Auto-roll period</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.6">When marked Submitted, the next recurring deadline gets an incremented period (e.g. <strong>June 2026 → July 2026</strong> for monthly, <strong>Q2 2026 → Q3 2026</strong> for quarterly).</div>
       </div>
     </div>
     <div class="dl-form-field">
       <label class="dl-form-label">Entity / Reference</label>
       <input class="dl-form-input" id="dl-f-ref" placeholder="e.g. ASO B.V. NL865807371B01 — or UK / CZ entity">
-    </div>
-    <div class="dl-form-row">
-      <div class="dl-form-field">
-        <label class="dl-form-label">Period (what this covers)</label>
-        <input class="dl-form-input" id="dl-f-period" placeholder="e.g. June 2026, Q2 2026, FY 2025">
-      </div>
-      <div class="dl-form-field">
-        <label class="dl-form-label" style="display:flex;align-items:center;gap:5px;cursor:pointer" title="Auto-increment period when this deadline recurs">
-          <input type="checkbox" id="dl-f-period-auto" checked style="margin:0">
-          Auto-roll period
-        </label>
-        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5">When marked Submitted, next period<br>increments based on Repeat setting.</div>
-      </div>
     </div>
     <div class="dl-form-field">
       <label class="dl-form-label">Checklist (one per line)</label>
@@ -1772,11 +1770,58 @@ function incrementPeriod(period, months) {
   return period;
 }
 
+// Handle tag dropdown change in Deadline modal — intercept "+ Add new tag…"
+function onDlTagChange(sel) {
+  if (sel.value === '__add__') {
+    // Restore previous so the dropdown doesn't stay stuck on "+ Add..."
+    const restoreTo = sel.dataset.lastValue || 'vat';
+    sel.value = restoreTo;
+    const raw = prompt('New tag name:\n(letters/numbers/space, max 20 chars)');
+    if (!raw) return; // user cancelled
+    const cleanTag = raw.trim().toLowerCase().replace(/[^a-z0-9 _-]/g,'').slice(0,20);
+    if (!cleanTag) { showToast('Invalid tag name.'); return; }
+    // Check if already exists
+    const builtins = ['vat','finance','procurement','audit','general'];
+    if (builtins.includes(cleanTag)) {
+      sel.value = cleanTag;
+      sel.dataset.lastValue = sel.value;
+      showToast(`"${cleanTag.toUpperCase()}" is a built-in tag — selected it.`);
+      return;
+    }
+    if (customTags.includes(cleanTag)) {
+      sel.value = 'custom:' + cleanTag;
+      sel.dataset.lastValue = sel.value;
+      showToast(`Tag "${cleanTag.toUpperCase()}" already exists — selected it.`);
+      return;
+    }
+    // Add new custom tag everywhere
+    customTags.push(cleanTag);
+    saveData(); // pushes to cloud and saves locally
+    updateTagDropdown(); // refresh Board's tag dropdown
+    renderCustomTags(); // refresh Board's tag pills
+    // Insert new option into this dropdown right before "+ Add…"
+    const addOpt = sel.querySelector('option[value="__add__"]');
+    const newOpt = document.createElement('option');
+    newOpt.value = 'custom:' + cleanTag;
+    newOpt.textContent = cleanTag.toUpperCase();
+    newOpt.dataset.custom = '1';
+    if (addOpt) sel.insertBefore(newOpt, addOpt);
+    else sel.appendChild(newOpt);
+    sel.value = 'custom:' + cleanTag;
+    sel.dataset.lastValue = sel.value;
+    showToast(`✓ "${cleanTag.toUpperCase()}" added and synced everywhere!`);
+  } else {
+    sel.dataset.lastValue = sel.value;
+  }
+}
+
 function openDlModal(id) {
   editingDlId = id || null;
-  // Always inject custom tags into the dropdown
+  // Always inject custom tags + the "+ Add new tag…" option
   const tagSel = document.getElementById('dl-f-tag');
-  Array.from(tagSel.options).forEach(o => { if (o.dataset.custom) o.remove(); });
+  Array.from(tagSel.options).forEach(o => {
+    if (o.dataset.custom || o.value === '__add__') o.remove();
+  });
   customTags.forEach(ct => {
     const o = document.createElement('option');
     o.value = 'custom:' + ct;
@@ -1784,6 +1829,10 @@ function openDlModal(id) {
     o.dataset.custom = '1';
     tagSel.appendChild(o);
   });
+  const addOpt = document.createElement('option');
+  addOpt.value = '__add__';
+  addOpt.textContent = '+ Add new tag…';
+  tagSel.appendChild(addOpt);
   if (id) {
     const dl = deadlines.find(x=>x.id===id);
     if (!dl) return;
@@ -1813,6 +1862,8 @@ function openDlModal(id) {
     document.getElementById('dl-f-custom-months').value = 2;
     document.getElementById('dl-f-custom-wrap').style.display = 'none';
   }
+  // Remember the current tag value so we can restore on "+ Add new tag…" cancel
+  tagSel.dataset.lastValue = tagSel.value;
   document.getElementById('dl-modal').classList.add('show');
 }
 function closeDlModal() {
