@@ -2890,11 +2890,17 @@ let dlPanelSaveTimers = {};
 function openDlPanel(id) {
   const dl = deadlines.find(x => x.id === id);
   if (!dl) return;
+  // Toggle: if clicking the SAME deadline that's already in the panel → close
+  const panelEl = document.getElementById('dl-side-panel');
+  if (dlPanelId === id && panelEl && panelEl.classList.contains('open')) {
+    closeDlPanel();
+    return;
+  }
   // If switching from one deadline to another, flush pending saves on the previous one
   if (dlPanelId && dlPanelId !== id) flushAllPanelSaves();
   dlPanelId = id;
   renderDlPanel();
-  document.getElementById('dl-side-panel').classList.add('open');
+  panelEl.classList.add('open');
 }
 
 function closeDlPanel() {
@@ -3700,11 +3706,20 @@ let clPanelType = null, clPanelSecId = null, clPanelItemId = null;
 let clPanelSaveTimers = {};
 
 function openClPanel(type, secId, itemId) {
+  // Toggle: if clicking the SAME item that's already in the panel → close
+  const panelEl = document.getElementById('cl-side-panel');
+  if (clPanelType === type && clPanelSecId === secId && clPanelItemId === itemId
+      && panelEl && panelEl.classList.contains('open')) {
+    closeClPanel();
+    return;
+  }
+  // If switching items, flush pending saves first
+  if (clPanelItemId && clPanelItemId !== itemId) flushAllClPanelSaves();
   clPanelType = type;
   clPanelSecId = secId;
   clPanelItemId = itemId;
   renderClPanel();
-  document.getElementById('cl-side-panel').classList.add('open');
+  panelEl.classList.add('open');
 }
 
 function closeClPanel() {
