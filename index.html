@@ -32,7 +32,11 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 62px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
 .logo { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; flex-shrink: 0; }
 .logo span { color: var(--gold); }
-.sync-pill { display: flex; align-items: center; gap: 5px; background: var(--bg2); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--muted); }
+.sync-pill { display: flex; align-items: center; gap: 5px; background: var(--bg2); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--muted); cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
+.sync-pill:hover { background: var(--border); color: var(--text); border-color: var(--border2); }
+.sync-pill.needs-signin { background: #fff3e0; color: var(--orange); border-color: #ffd9a8; animation: pulseBorder 2s ease-in-out infinite; }
+.sync-pill.needs-signin:hover { background: var(--orange); color: #fff; }
+@keyframes pulseBorder { 0%,100%{box-shadow:0 0 0 0 rgba(201,95,10,0.2)} 50%{box-shadow:0 0 0 4px rgba(201,95,10,0)} }
 .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
 .sync-dot.synced { background: var(--green); }
 .sync-dot.syncing { background: var(--gold); animation: blink 0.8s ease-in-out infinite; }
@@ -678,7 +682,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <header>
   <div class="logo">Task<span>Board</span></div>
-  <div class="sync-pill"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">—</span></div>
+  <div class="sync-pill" id="sync-pill" onclick="headerSyncClick()" title="Click to sign in / sync now"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">—</span></div>
   <div class="hdr-right">
     <div class="hdr-stat"><div class="hdr-num" id="stat-total">0</div><div class="hdr-lbl">Total</div></div>
     <div class="hdr-div"></div>
@@ -1357,6 +1361,45 @@ function logAudit(action, target, details) {
 function setSyncStatus(state, label) {
   document.getElementById('sync-dot').className = 'sync-dot ' + state;
   document.getElementById('sync-label').textContent = label;
+  const pill = document.getElementById('sync-pill');
+  if (pill) {
+    const isError = (state === 'error');
+    pill.classList.toggle('needs-signin', isError);
+    pill.title = isError ? 'Click to sign in to Google and load latest data' : 'Click to sync now';
+  }
+}
+
+// Header sync-pill click — interactive sign-in if needed, otherwise force a pull
+async function headerSyncClick() {
+  if (!isTokenValid()) {
+    showToast('Opening Google sign-in…');
+    const ok = await googleSignIn({ interactive: true });
+    if (!ok) { showToast('Sign-in cancelled or failed.'); return; }
+    showToast('✓ Signed in. Loading latest data…');
+    const pulled = await pullFromCloud();
+    if (pulled) {
+      updateTagDropdown(); renderCustomTags(); render();
+      renderDeadlines(); renderReference(); renderContacts(); renderLessons();
+      renderChecklist('me'); renderChecklist('ye'); renderAuditTrail();
+      setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
+      showToast('☁️ Latest data loaded!');
+    } else {
+      setSyncStatus('synced', 'Signed in (nothing to pull)');
+    }
+  } else {
+    // Already signed in — force pull as a manual refresh
+    setSyncStatus('syncing', 'Refreshing…');
+    const pulled = await pullFromCloud();
+    if (pulled) {
+      updateTagDropdown(); renderCustomTags(); render();
+      renderDeadlines(); renderReference(); renderContacts(); renderLessons();
+      renderChecklist('me'); renderChecklist('ye'); renderAuditTrail();
+      setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
+      showToast('☁️ Refreshed from cloud.');
+    } else {
+      setSyncStatus('error', 'Click to sign in');
+    }
+  }
 }
 
 // ════════════════════════════════════════
@@ -1383,9 +1426,13 @@ function loadLocal() {
 }
 function isTokenValid() { return gdToken && Date.now() < gdExpiry - 60000; }
 
-function googleSignIn() {
+// Silent (no popup) vs Interactive sign-in
+// opts.interactive = true → show consent popup; false → try silently (works only if user
+// previously consented on this device and is still signed into Google in browser)
+function googleSignIn(opts) {
+  opts = opts || { interactive: true };
   return new Promise((resolve) => {
-    if (isTokenValid()) { resolve(true); return; }
+    if (isTokenValid() && !opts.force) { resolve(true); return; }
     try {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GDRIVE_CLIENT_ID,
@@ -1396,13 +1443,59 @@ function googleSignIn() {
             gdExpiry = Date.now() + (resp.expires_in * 1000);
             localStorage.setItem('naj_gd_token', gdToken);
             localStorage.setItem('naj_gd_expiry', gdExpiry.toString());
+            scheduleTokenRefresh();
             resolve(true);
           } else { resolve(false); }
-        }
+        },
+        error_callback: () => resolve(false)
       });
-      client.requestAccessToken({ prompt: 'consent' });
+      // empty prompt → silent; 'consent' → forces UI
+      const prompt = opts.interactive ? 'consent' : '';
+      client.requestAccessToken({ prompt: prompt });
+      // Timeout safety: if silent doesn't resolve within 3s, give up
+      if (!opts.interactive) {
+        setTimeout(() => resolve(false), 3000);
+      }
     } catch(e) { resolve(false); }
   });
+}
+
+// Schedule a silent token refresh ~5 minutes before expiry
+let tokenRefreshTimer = null;
+function scheduleTokenRefresh() {
+  if (tokenRefreshTimer) { clearTimeout(tokenRefreshTimer); tokenRefreshTimer = null; }
+  if (!gdToken || !gdExpiry) return;
+  const refreshAt = gdExpiry - (5 * 60 * 1000); // 5 min before expiry
+  const delay = refreshAt - Date.now();
+  if (delay <= 0) return; // already near expiry; silent refresh will be attempted by other paths
+  tokenRefreshTimer = setTimeout(async () => {
+    const ok = await googleSignIn({ interactive: false });
+    if (ok) {
+      setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
+    } else {
+      // Silent refresh failed — token will expire. UI will prompt user when needed.
+      setSyncStatus('error', 'Click to sign in');
+    }
+  }, delay);
+}
+
+// Track last successful sync timestamp for the header indicator
+function recordSyncSuccess() {
+  localStorage.setItem('naj_gd_last_sync', Date.now().toString());
+}
+function getLastSync() {
+  const v = parseInt(localStorage.getItem('naj_gd_last_sync') || '0');
+  return v > 0 ? v : null;
+}
+function formatLastSync() {
+  const t = getLastSync();
+  if (!t) return '';
+  const diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 10) return '(just now)';
+  if (diff < 60) return `(${diff}s ago)`;
+  if (diff < 3600) return `(${Math.floor(diff/60)}m ago)`;
+  if (diff < 86400) return `(${Math.floor(diff/3600)}h ago)`;
+  return `(${Math.floor(diff/86400)}d ago)`;
 }
 
 async function getDriveFileId() {
@@ -1440,13 +1533,14 @@ async function pushToCloud() {
     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
       method: 'PATCH', headers: { Authorization: `Bearer ${gdToken}` }, body: form
     });
-    setSyncStatus('synced', 'Synced ✓');
+    recordSyncSuccess();
+    setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
   } catch(e) { setSyncStatus('error', 'Saved locally'); }
 }
 
 async function pullFromCloud() {
   try {
-    const ok = await googleSignIn();
+    const ok = await googleSignIn({ interactive: false }); // try silent first
     if (!ok) return false;
     const fileId = await getDriveFileId();
     if (!fileId) return false;
@@ -1454,7 +1548,12 @@ async function pullFromCloud() {
       headers: { Authorization: `Bearer ${gdToken}` }
     });
     const data = await res.json();
-    if (data && data.tasks !== undefined) { applyAllData(data); saveLocal(); return true; }
+    if (data && data.tasks !== undefined) {
+      applyAllData(data);
+      saveLocal();
+      recordSyncSuccess();
+      return true;
+    }
   } catch(e) {}
   return false;
 }
@@ -1462,34 +1561,67 @@ async function pullFromCloud() {
 async function loadData() {
   setSyncStatus('syncing', 'Loading…');
   loadLocal();
+  loadClLocal();
   document.getElementById('overlay').style.display = 'none';
   updateTagDropdown(); renderCustomTags(); render();
-  // Auto-pull on open
+  initChecklist('me'); initChecklist('ye');
+  loadNotifSettings(); renderAuditTrail();
+  // If we have a (still-valid) token, schedule its refresh
+  if (gdToken && gdExpiry) scheduleTokenRefresh();
+  // Try silent sign-in if no valid token yet
+  if (!isTokenValid()) {
+    setSyncStatus('syncing', 'Reconnecting…');
+    await googleSignIn({ interactive: false });
+  }
+  // Now try to pull
   if (isTokenValid()) {
     const ok = await pullFromCloud();
     if (ok) {
       updateTagDropdown(); renderCustomTags(); render();
       renderDeadlines(); renderReference(); renderContacts(); renderLessons();
-      setSyncStatus('synced', 'Synced ✓');
+      // Re-init checklists if they came from cloud
+      if (Array.isArray(meChecklist) && meChecklist.length === 0) initChecklist('me'); else renderChecklist('me');
+      if (Array.isArray(yeChecklist) && yeChecklist.length === 0) initChecklist('ye'); else renderChecklist('ye');
+      renderAuditTrail();
+      setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
       showToast('☁️ Latest data loaded from cloud');
     } else {
-      setSyncStatus('error', 'Click Sign In to sync');
+      setSyncStatus('error', 'Click to sign in');
     }
   } else {
-    setSyncStatus('error', 'Click Sign In to sync');
+    setSyncStatus('error', 'Click to sign in');
+  }
+  // Refresh the "last synced" label every 30s so the relative time updates
+  setInterval(refreshSyncLabel, 30000);
+  // Check deadlines for notifications
+  setTimeout(checkDeadlineNotifications, 3000);
+  setInterval(checkDeadlineNotifications, 30 * 60 * 1000);
+}
+
+// Refresh the "Synced (X ago)" relative time in the header
+function refreshSyncLabel() {
+  const lbl = document.getElementById('sync-label');
+  if (!lbl) return;
+  if (isTokenValid() && getLastSync()) {
+    setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
   }
 }
 
 async function saveData() { saveLocal(); render(); pushToCloud(); }
 
-// Poll every 30s
+// Poll every 30s for changes from other devices
 setInterval(async () => {
-  if (!isTokenValid()) return;
+  if (!isTokenValid()) {
+    // Try silent re-auth periodically (in case cookie session is alive)
+    await googleSignIn({ interactive: false });
+    if (!isTokenValid()) return;
+  }
   const ok = await pullFromCloud();
   if (ok) {
     updateTagDropdown(); renderCustomTags(); render();
     renderDeadlines(); renderReference(); renderContacts(); renderLessons();
-    setSyncStatus('synced', 'Updated ✓');
+    renderChecklist('me'); renderChecklist('ye');
+    setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
   }
 }, 30000);
 
@@ -4271,19 +4403,20 @@ function exportAndSaveOneDrive() {
 // ════════════════════════════════════════
 async function signInAndSync() {
   const status = document.getElementById('sync-setup-status');
-  if (status) { status.textContent = 'Signing in to Google...'; status.className = 'notif-status'; }
-  const ok = await googleSignIn();
+  if (status) { status.textContent = 'Opening Google sign-in…'; status.className = 'notif-status'; }
+  const ok = await googleSignIn({ interactive: true });
   if (!ok) {
     if (status) { status.textContent = '✕ Sign-in failed or cancelled.'; status.className = 'notif-status denied'; }
     return;
   }
-  if (status) { status.textContent = '✓ Signed in. Syncing...'; status.className = 'notif-status ok'; }
+  if (status) { status.textContent = '✓ Signed in. Syncing…'; status.className = 'notif-status ok'; }
   await pullFromCloud();
   await pushToCloud();
-  if (status) { status.textContent = '✓ Signed in and synced with Google Drive.'; status.className = 'notif-status ok'; }
+  if (status) { status.textContent = '✓ Signed in. Auto-sync is now active — you should stay signed in on this device.'; status.className = 'notif-status ok'; }
   updateTagDropdown(); renderCustomTags(); render();
   renderDeadlines(); renderReference(); renderContacts(); renderLessons();
-  renderChecklist('me'); renderChecklist('ye');
+  renderChecklist('me'); renderChecklist('ye'); renderAuditTrail();
+  setSyncStatus('synced', 'Synced ✓ ' + formatLastSync());
   showToast('☁️ Synced!');
 }
 
@@ -4338,51 +4471,6 @@ document.addEventListener('visibilitychange', function() {
 });
 
 // Override the original loadData to include checklists + audit trail + lessons
-async function loadData() {
-  setSyncStatus('syncing', 'Loading…');
-  loadLocal();
-  loadClLocal();
-  // Load custom history from localStorage (legacy fallback)
-  try {
-    const meH = localStorage.getItem('naj_me_history_v2');
-    const yeH = localStorage.getItem('naj_ye_history_v2');
-    if (meH && !meHistory.length) meHistory = JSON.parse(meH);
-    if (yeH && !yeHistory.length) yeHistory = JSON.parse(yeH);
-  } catch(e) {}
-  document.getElementById('overlay').style.display = 'none';
-  updateTagDropdown();
-  renderCustomTags();
-  render();
-  initChecklist('me');
-  initChecklist('ye');
-  loadNotifSettings();
-  renderAuditTrail();
-  // Auto-pull on open if signed in
-  if (isTokenValid()) {
-    const ok = await pullFromCloud();
-    if (ok) {
-      updateTagDropdown(); renderCustomTags(); render();
-      renderDeadlines(); renderReference(); renderContacts(); renderLessons();
-      // Re-init checklists if they came from cloud
-      if (Array.isArray(meChecklist) && meChecklist.length === 0) initChecklist('me');
-      else renderChecklist('me');
-      if (Array.isArray(yeChecklist) && yeChecklist.length === 0) initChecklist('ye');
-      else renderChecklist('ye');
-      renderAuditTrail();
-      setSyncStatus('synced', 'Synced ✓');
-      showToast('☁️ Latest data loaded from cloud');
-    } else {
-      setSyncStatus('error', 'Click Sign In to sync');
-    }
-  } else {
-    setSyncStatus('error', 'Click Sign In to sync');
-  }
-  // Check deadlines for notifications
-  setTimeout(checkDeadlineNotifications, 3000);
-  // Re-check every 30 minutes
-  setInterval(checkDeadlineNotifications, 30 * 60 * 1000);
-}
-
 // Override getAllData to include checklists for cloud sync
 const _origGetAllData = getAllData;
 function getAllData() {
