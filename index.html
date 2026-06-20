@@ -607,6 +607,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-btn-blue { background:var(--blue); color:#fff; }
 .cl-btn-ghost { background:var(--bg2); border:1px solid var(--border); color:var(--text2); }
 .cl-progress-wrap { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:18px; box-shadow:var(--shadow); }
+.cl-progress-inline { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); margin: 4px 2px 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.cl-progress-inline .cl-inline-pct { color: var(--gold); font-weight: 700; font-family: 'Playfair Display', serif; text-transform: none; font-size: 13px; letter-spacing: 0; }
+.cl-progress-inline .cl-inline-count { color: var(--text2); font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 11px; }
 .cl-progress-top { display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
 .cl-progress-label { font-size:13px; font-weight:600; color:var(--text); flex:1; }
 .cl-progress-pct { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--gold); }
@@ -1153,6 +1156,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <option value="completed">✓ Completed</option>
         </select>
       </div>
+      <div class="cl-progress-inline">
+        <span>Progress this month — <span class="cl-inline-pct" id="me-pct">0%</span></span>
+        <span class="cl-inline-count" id="me-count">0 / 0 tasks</span>
+      </div>
       <div class="cl-bar-bg"><div class="cl-bar-fill" id="me-bar" style="width:0%"></div></div>
     </div>
     <div class="cl-scroll-body">
@@ -1160,13 +1167,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <span class="mgr-icon">👔</span>
         <span class="mgr-text">Show only items to discuss with manager</span>
         <span class="mgr-count" id="me-mgr-count">0</span>
-      </div>
-      <div class="cl-progress-wrap">
-        <div class="cl-progress-top">
-          <div class="cl-progress-label">Progress this month</div>
-          <div class="cl-progress-pct" id="me-pct">0%</div>
-          <div class="cl-progress-count" id="me-count">0 / 0 tasks</div>
-        </div>
       </div>
       <div id="me-sections"></div>
     </div>
@@ -1209,6 +1209,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <option value="completed">✓ Completed</option>
         </select>
       </div>
+      <div class="cl-progress-inline">
+        <span>Progress this year — <span class="cl-inline-pct" id="ye-pct">0%</span></span>
+        <span class="cl-inline-count" id="ye-count">0 / 0 tasks</span>
+      </div>
       <div class="cl-bar-bg"><div class="cl-bar-fill" id="ye-bar" style="width:0%"></div></div>
     </div>
     <div class="cl-scroll-body">
@@ -1216,13 +1220,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <span class="mgr-icon">👔</span>
         <span class="mgr-text">Show only items to discuss with manager</span>
         <span class="mgr-count" id="ye-mgr-count">0</span>
-      </div>
-      <div class="cl-progress-wrap">
-        <div class="cl-progress-top">
-          <div class="cl-progress-label">Progress this year</div>
-          <div class="cl-progress-pct" id="ye-pct">0%</div>
-          <div class="cl-progress-count" id="ye-count">0 / 0 tasks</div>
-        </div>
       </div>
       <div id="ye-sections"></div>
     </div>
