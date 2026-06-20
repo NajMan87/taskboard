@@ -265,6 +265,39 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .dl-view-toggle:hover { background: var(--bg2); color: var(--text); }
 .dl-view-toggle.active { background: var(--text); color: var(--surface); border-color: var(--text); }
 
+/* Segmented view toggle (Card / List / Board) */
+.dl-view-seg { display: inline-flex; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
+.dl-view-seg button { background: transparent; border: none; padding: 5px 12px; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--text2); cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 5px; }
+.dl-view-seg button:hover { background: var(--surface); color: var(--text); }
+.dl-view-seg button.active { background: var(--text); color: var(--surface); }
+
+/* Period badge */
+.dl-period-badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: var(--purple-bg); color: var(--purple); font-weight: 600; }
+
+/* Board view (Kanban) — 4 columns */
+.dl-board-view { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.dl-board-col { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 240px; }
+.dl-board-col.overdue { border-top: 3px solid var(--red); }
+.dl-board-col.pending { border-top: 3px solid var(--gold); }
+.dl-board-col.working { border-top: 3px solid var(--blue); }
+.dl-board-col.submitted { border-top: 3px solid var(--green); }
+.dl-board-col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.dl-board-col-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text2); }
+.dl-board-col-count { margin-left: auto; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 1px 8px; border-radius: 10px; font-weight: 600; }
+.dl-mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 11px; margin-bottom: 8px; box-shadow: var(--shadow); cursor: pointer; transition: all .15s; }
+.dl-mini-card:hover { box-shadow: var(--shadow2); transform: translateY(-1px); }
+.dl-mini-card.overdue { border-left: 3px solid var(--red); }
+.dl-mini-card.pending { border-left: 3px solid var(--gold); }
+.dl-mini-card.working { border-left: 3px solid var(--blue); }
+.dl-mini-card.submitted { border-left: 3px solid var(--green); opacity: .8; }
+.dl-mini-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 7px; word-break: break-word; }
+.dl-mini-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.dl-mini-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--border); }
+.dl-mini-actions .dl-del-btn { padding: 3px 7px; font-size: 11px; }
+.dl-board-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 20px 8px; font-style: italic; }
+@media (max-width: 1024px) { .dl-board-view { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .dl-board-view { grid-template-columns: 1fr; } }
+
 /* Status groups */
 .dl-group { margin-bottom: 18px; }
 .dl-group-header { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px; transition: background .15s; user-select: none; }
@@ -717,7 +750,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="dl-sticky-head">
       <div class="dl-topbar">
         <div class="dl-heading">🗓 Deadline Tracker</div>
-        <button class="dl-view-toggle" id="dl-view-toggle-btn" onclick="toggleDlView()" title="Switch between Card and List view">📋 List View</button>
+        <div class="dl-view-seg" id="dl-view-seg">
+          <button id="dl-view-card" onclick="setDlView('card')" title="Card view">🗂 Card</button>
+          <button id="dl-view-list" onclick="setDlView('list')" title="List view">📋 List</button>
+          <button id="dl-view-board" onclick="setDlView('board')" title="Board view">🗒 Board</button>
+        </div>
         <button class="btn-add-dl" onclick="openDlModal()">+ Add Deadline</button>
       </div>
       <div class="dl-summary" id="dl-summary"></div>
@@ -740,7 +777,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="dl-form-row">
       <div class="dl-form-field">
         <label class="dl-form-label">Due Date *</label>
-        <input class="dl-form-input" id="dl-f-date" type="date">
+        <input class="dl-form-input" id="dl-f-date" type="date" lang="en-GB">
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">Format: dd/mm/yyyy</div>
       </div>
       <div class="dl-form-field">
         <label class="dl-form-label">Tag</label>
@@ -771,6 +809,19 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="dl-form-field">
       <label class="dl-form-label">Entity / Reference</label>
       <input class="dl-form-input" id="dl-f-ref" placeholder="e.g. ASO B.V. NL865807371B01 — or UK / CZ entity">
+    </div>
+    <div class="dl-form-row">
+      <div class="dl-form-field">
+        <label class="dl-form-label">Period (what this covers)</label>
+        <input class="dl-form-input" id="dl-f-period" placeholder="e.g. June 2026, Q2 2026, FY 2025">
+      </div>
+      <div class="dl-form-field">
+        <label class="dl-form-label" style="display:flex;align-items:center;gap:5px;cursor:pointer" title="Auto-increment period when this deadline recurs">
+          <input type="checkbox" id="dl-f-period-auto" checked style="margin:0">
+          Auto-roll period
+        </label>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5">When marked Submitted, next period<br>increments based on Repeat setting.</div>
+      </div>
     </div>
     <div class="dl-form-field">
       <label class="dl-form-label">Checklist (one per line)</label>
@@ -1181,7 +1232,7 @@ function deadlineStatus(dl) {
 }
 function formatDeadline(dl) {
   if (!dl) return '';
-  return new Date(dl).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  return new Date(dl).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 function logAudit(action, target, details) {
   auditTrail.unshift({
@@ -1676,8 +1727,63 @@ function dlDueBadgeLabel(dl, status) {
   return formatDeadline(dl);
 }
 
+// A deadline is "overdue" if EITHER status is manually set to 'overdue' OR date is past (and not submitted)
+function isDlOverdue(d) {
+  if (!d) return false;
+  if (d.status === 'submitted') return false;
+  if (d.status === 'overdue') return true;
+  return dlDeadlineStatus(d.date, d.status) === 'overdue';
+}
+
+// Increment a period string ("June 2026", "Q2 2026") by N months
+function incrementPeriod(period, months) {
+  if (!period) return '';
+  const monthLong = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Try "Month YYYY" (long or short name)
+  for (let i = 0; i < 12; i++) {
+    const longRx = new RegExp(`\\b${monthLong[i]}\\s*(\\d{4})\\b`, 'i');
+    const shortRx = new RegExp(`\\b${monthShort[i]}\\s*(\\d{4})\\b`, 'i');
+    const m = period.match(longRx) || period.match(shortRx);
+    if (m) {
+      const year = parseInt(m[1]);
+      let newIdx = i + months;
+      let newYear = year;
+      while (newIdx >= 12) { newIdx -= 12; newYear++; }
+      while (newIdx < 0) { newIdx += 12; newYear--; }
+      const useShort = !!period.match(shortRx);
+      const newMonth = useShort ? monthShort[newIdx] : monthLong[newIdx];
+      return period.replace(m[0], `${newMonth} ${newYear}`);
+    }
+  }
+  // Try quarter "Q1 YYYY" / "Q2 YYYY" etc.
+  const qm = period.match(/\bQ([1-4])\s*(\d{4})\b/i);
+  if (qm) {
+    const q = parseInt(qm[1]);
+    const year = parseInt(qm[2]);
+    const qShift = Math.round(months / 3);
+    let newQ = q + qShift;
+    let newYear = year;
+    while (newQ > 4) { newQ -= 4; newYear++; }
+    while (newQ < 1) { newQ += 4; newYear--; }
+    return period.replace(qm[0], `Q${newQ} ${newYear}`);
+  }
+  // Fallback: keep as-is
+  return period;
+}
+
 function openDlModal(id) {
   editingDlId = id || null;
+  // Always inject custom tags into the dropdown
+  const tagSel = document.getElementById('dl-f-tag');
+  Array.from(tagSel.options).forEach(o => { if (o.dataset.custom) o.remove(); });
+  customTags.forEach(ct => {
+    const o = document.createElement('option');
+    o.value = 'custom:' + ct;
+    o.textContent = ct.toUpperCase();
+    o.dataset.custom = '1';
+    tagSel.appendChild(o);
+  });
   if (id) {
     const dl = deadlines.find(x=>x.id===id);
     if (!dl) return;
@@ -1686,6 +1792,8 @@ function openDlModal(id) {
     document.getElementById('dl-f-date').value = dl.date;
     document.getElementById('dl-f-tag').value = dl.tag;
     document.getElementById('dl-f-ref').value = dl.ref || '';
+    document.getElementById('dl-f-period').value = dl.period || '';
+    document.getElementById('dl-f-period-auto').checked = (dl.periodAuto !== false);
     document.getElementById('dl-f-checklist').value = (dl.checklist||[]).map(c=>c.text).join('\n');
     document.getElementById('dl-f-notes').value = dl.notes || '';
     document.getElementById('dl-f-repeat').value = dl.repeat || 'none';
@@ -1697,6 +1805,8 @@ function openDlModal(id) {
     document.getElementById('dl-f-date').value = '';
     document.getElementById('dl-f-tag').value = 'vat';
     document.getElementById('dl-f-ref').value = '';
+    document.getElementById('dl-f-period').value = '';
+    document.getElementById('dl-f-period-auto').checked = true;
     document.getElementById('dl-f-checklist').value = '';
     document.getElementById('dl-f-notes').value = '';
     document.getElementById('dl-f-repeat').value = 'none';
@@ -1721,6 +1831,8 @@ function saveDlModal() {
       dl.date = date;
       dl.tag = document.getElementById('dl-f-tag').value;
       dl.ref = document.getElementById('dl-f-ref').value.trim();
+      dl.period = document.getElementById('dl-f-period').value.trim();
+      dl.periodAuto = document.getElementById('dl-f-period-auto').checked;
       dl.notes = document.getElementById('dl-f-notes').value.trim();
       dl.repeat = document.getElementById('dl-f-repeat').value;
       dl.customMonths = parseInt(document.getElementById('dl-f-custom-months').value)||2;
@@ -1736,6 +1848,8 @@ function saveDlModal() {
       id: uid(), title, date,
       tag: document.getElementById('dl-f-tag').value,
       ref: document.getElementById('dl-f-ref').value.trim(),
+      period: document.getElementById('dl-f-period').value.trim(),
+      periodAuto: document.getElementById('dl-f-period-auto').checked,
       notes: document.getElementById('dl-f-notes').value.trim(),
       status: 'pending',
       repeat: document.getElementById('dl-f-repeat').value,
@@ -1819,16 +1933,20 @@ function confirmSubmitDl() {
     const nextISO = nextDate.toISOString().slice(0,10);
     const exists = deadlines.some(x => x.title===dl.title && x.date===nextISO);
     if (!exists) {
+      // Auto-roll period if user wants it (default yes)
+      const nextPeriod = (dl.periodAuto !== false) ? incrementPeriod(dl.period||'', months) : (dl.period||'');
       deadlines.push({
         id: uid(), title: dl.title, date: nextISO, tag: dl.tag, ref: dl.ref||'',
+        period: nextPeriod, periodAuto: (dl.periodAuto !== false),
         notes: dl.notes||'', status: 'pending', repeat: dl.repeat,
         customMonths: dl.customMonths||2,
         checklist: (dl.checklist||[]).map(c=>({id:uid(),text:c.text,done:false})),
         attachments: [],
         created: todayStr()
       });
-      showToast(`🔄 Next ${dl.repeat==='monthly'?'monthly':dl.repeat==='quarterly'?'quarterly':'recurring'} deadline created: ${nextISO}`);
-      logAudit('AUTO_CREATE_RECURRING', dl.title, `nextDate=${nextISO}`);
+      const periodMsg = nextPeriod ? ` (Period: ${nextPeriod})` : '';
+      showToast(`🔄 Next ${dl.repeat==='monthly'?'monthly':dl.repeat==='quarterly'?'quarterly':'recurring'} deadline created: ${formatDeadline(nextISO)}${periodMsg}`);
+      logAudit('AUTO_CREATE_RECURRING', dl.title, `nextDate=${nextISO} period=${nextPeriod}`);
     }
   } else {
     showToast('✓ Submitted & lesson saved!');
@@ -1994,7 +2112,7 @@ function renderDeadlines() {
   }
   let shown = deadlines;
   if (dlFilter === 'overdue') {
-    shown = deadlines.filter(d => d.status!=='submitted' && dlDeadlineStatus(d.date,d.status)==='overdue');
+    shown = deadlines.filter(d => isDlOverdue(d));
   } else if (dlFilter !== 'all') {
     shown = deadlines.filter(d => d.status === dlFilter);
   }
@@ -2025,9 +2143,8 @@ function renderDeadlines() {
   });
   const grid = document.getElementById('dl-grid');
   if (!grid) return;
-  // Update view toggle button label
-  const vtBtn = document.getElementById('dl-view-toggle-btn');
-  if (vtBtn) vtBtn.textContent = (dlViewMode === 'list') ? '🗂 Card View' : '📋 List View';
+  // Update view toggle buttons
+  refreshDlViewButtons();
   if (!shown.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:13px;">No deadlines found. Click <strong>+ Add Deadline</strong> to get started.</div>`;
     grid.style.display = 'block';
@@ -2039,6 +2156,26 @@ function renderDeadlines() {
     grid.innerHTML = `<div class="dl-list-view">${shown.map(dl => renderDlListRow(dl)).join('')}</div>`;
     return;
   }
+  // BOARD VIEW (Kanban: 4 columns by status)
+  if (dlViewMode === 'board') {
+    grid.style.display = 'block';
+    const cols = [
+      { key: 'overdue',   label: '🔴 Overdue',   items: shown.filter(d => isDlOverdue(d)) },
+      { key: 'pending',   label: '⏳ Pending',   items: shown.filter(d => d.status === 'pending' && !isDlOverdue(d)) },
+      { key: 'working',   label: '🔵 Working',   items: shown.filter(d => d.status === 'working' && !isDlOverdue(d)) },
+      { key: 'submitted', label: '✅ Submitted', items: shown.filter(d => d.status === 'submitted') }
+    ];
+    grid.innerHTML = `<div class="dl-board-view">${cols.map(c => `
+      <div class="dl-board-col ${c.key}">
+        <div class="dl-board-col-head">
+          <span class="dl-board-col-title">${c.label}</span>
+          <span class="dl-board-col-count">${c.items.length}</span>
+        </div>
+        ${c.items.length ? c.items.map(dl => renderDlMiniCard(dl, c.key)).join('') : '<div class="dl-board-empty">No items</div>'}
+      </div>
+    `).join('')}</div>`;
+    return;
+  }
   // CARD VIEW
   grid.style.display = '';
   // If a specific status filter is active (not 'all'), show flat list of cards (no group headers)
@@ -2048,9 +2185,9 @@ function renderDeadlines() {
   }
   // 'All' filter — group by status. Compute groups from `shown` (which may already be quick-filtered).
   const groups = [
-    { key: 'overdue',   label: '🔴 Overdue',   items: shown.filter(d => d.status !== 'submitted' && dlDeadlineStatus(d.date, d.status) === 'overdue') },
-    { key: 'pending',   label: '⏳ Pending',   items: shown.filter(d => d.status === 'pending'  && dlDeadlineStatus(d.date, d.status) !== 'overdue') },
-    { key: 'working',   label: '🔵 Working',   items: shown.filter(d => d.status === 'working'  && dlDeadlineStatus(d.date, d.status) !== 'overdue') },
+    { key: 'overdue',   label: '🔴 Overdue',   items: shown.filter(d => isDlOverdue(d)) },
+    { key: 'pending',   label: '⏳ Pending',   items: shown.filter(d => d.status === 'pending' && !isDlOverdue(d)) },
+    { key: 'working',   label: '🔵 Working',   items: shown.filter(d => d.status === 'working' && !isDlOverdue(d)) },
     { key: 'submitted', label: '✅ Submitted', items: shown.filter(d => d.status === 'submitted') }
   ];
   let html = '';
@@ -2075,11 +2212,15 @@ function renderDeadlines() {
 function renderDlCard(dl) {
   const ds = dlDeadlineStatus(dl.date, dl.status);
   const badge = dlDueBadgeLabel(dl.date, dl.status);
-  const tagCls = 'tag-' + (dl.tag||'general');
+  const tagRaw = dl.tag || 'general';
+  const isCustomTag = tagRaw.startsWith('custom:');
+  const tagCls = isCustomTag ? 'tag-custom' : 'tag-' + tagRaw;
+  const tagLabel = isCustomTag ? tagRaw.slice(7).toUpperCase() : tagRaw;
   const checklist = dl.checklist || [];
   const doneCount = checklist.filter(c=>c.done).length;
   const pct = checklist.length ? Math.round(doneCount/checklist.length*100) : 0;
   const isCollapsed = dlCardCollapsed.includes(dl.id);
+  const periodBadge = dl.period ? `<span class="dl-period-badge" title="Period this covers">📊 ${esc(dl.period)}</span>` : '';
   const checklistHtml = checklist.length ? `
     <div class="dl-checklist-head">Checklist
       <div class="dl-check-progress"><div class="dl-check-progress-bar" style="width:${pct}%"></div></div>
@@ -2121,7 +2262,8 @@ function renderDlCard(dl) {
             <option value="overdue" ${dl.status==='overdue'?'selected':''}>🔴 Overdue</option>
           </select>
           <span class="dl-due-badge ${ds}">${badge}</span>
-          <span class="dl-tag-badge ${tagCls}">${dl.tag||'general'}</span>
+          ${periodBadge}
+          <span class="dl-tag-badge ${tagCls}">${esc(tagLabel)}</span>
           ${repeatBadge}
         </div>
       </div>
@@ -2150,9 +2292,13 @@ function renderDlCard(dl) {
 function renderDlListRow(dl) {
   const ds = dlDeadlineStatus(dl.date, dl.status);
   const dueLabel = dlDueBadgeLabel(dl.date, dl.status);
-  const isOverdue = (ds === 'overdue' && dl.status !== 'submitted');
+  const isOverdue = isDlOverdue(dl);
   const repeatBadge = (dl.repeat && dl.repeat !== 'none') ? `<span class="dl-repeat-badge" title="Recurring">🔄</span>` : '';
-  const tagCls = 'tag-' + (dl.tag||'general');
+  const tagRaw = dl.tag || 'general';
+  const isCustomTag = tagRaw.startsWith('custom:');
+  const tagCls = isCustomTag ? 'tag-custom' : 'tag-' + tagRaw;
+  const tagLabel = isCustomTag ? tagRaw.slice(7).toUpperCase() : tagRaw;
+  const periodInline = dl.period ? `<span style="font-size:11px;color:var(--purple);margin-left:6px">📊 ${esc(dl.period)}</span>` : '';
   return `
   <div class="dl-list-row ${isOverdue?'overdue':''} ${dl.status==='submitted'?'submitted':''}" onclick="viewDlInCardMode('${dl.id}')" title="Click to view full details">
     <select class="dl-list-status-sel ${dl.status}" onclick="event.stopPropagation()" onchange="changeDlStatus('${dl.id}',this.value)" title="Change status">
@@ -2162,11 +2308,11 @@ function renderDlListRow(dl) {
       <option value="overdue" ${dl.status==='overdue'?'selected':''}>🔴 Overdue</option>
     </select>
     <div class="dl-list-title-wrap">
-      <div class="dl-list-title">${esc(dl.title)}</div>
+      <div class="dl-list-title">${esc(dl.title)}${periodInline}</div>
       ${dl.ref ? `<div class="dl-list-ref">${esc(dl.ref)}</div>` : ''}
     </div>
     <span class="dl-list-due ${ds}">${dueLabel}</span>
-    <span class="dl-list-tag dl-tag-badge ${tagCls}">${dl.tag||'general'}${repeatBadge?' '+repeatBadge:''}</span>
+    <span class="dl-list-tag dl-tag-badge ${tagCls}">${esc(tagLabel)}${repeatBadge?' '+repeatBadge:''}</span>
     <div class="dl-list-actions">
       <button class="dl-del-btn" onclick="event.stopPropagation();openDlModal('${dl.id}')" title="Edit details">✏️</button>
       <button class="dl-del-btn" onclick="event.stopPropagation();deleteDl('${dl.id}')" title="Delete">🗑</button>
@@ -2187,7 +2333,7 @@ function viewDlInCardMode(id) {
   // Make sure the group it lives in is expanded too
   const dl = deadlines.find(x => x.id === id);
   if (dl) {
-    const groupKey = (dl.status !== 'submitted' && dlDeadlineStatus(dl.date, dl.status) === 'overdue') ? 'overdue' : dl.status;
+    const groupKey = isDlOverdue(dl) ? 'overdue' : dl.status;
     dlGroupCollapsed = dlGroupCollapsed.filter(k => k !== groupKey);
     localStorage.setItem('naj_dl_groups', JSON.stringify(dlGroupCollapsed));
   }
@@ -2203,11 +2349,51 @@ function viewDlInCardMode(id) {
   }, 120);
 }
 
-// View toggle: card <-> list
-function toggleDlView() {
-  dlViewMode = (dlViewMode === 'card') ? 'list' : 'card';
+// Render a compact "mini" card for Board (kanban) view
+function renderDlMiniCard(dl, colKey) {
+  const ds = dlDeadlineStatus(dl.date, dl.status);
+  const dueLabel = dlDueBadgeLabel(dl.date, dl.status);
+  const tagRaw = dl.tag || 'general';
+  const isCustomTag = tagRaw.startsWith('custom:');
+  const tagCls = isCustomTag ? 'tag-custom' : 'tag-' + tagRaw;
+  const tagLabel = isCustomTag ? tagRaw.slice(7).toUpperCase() : tagRaw;
+  const repeatBadge = (dl.repeat && dl.repeat !== 'none') ? `<span class="dl-repeat-badge" title="Recurring">🔄</span>` : '';
+  const periodBadge = dl.period ? `<span class="dl-period-badge">📊 ${esc(dl.period)}</span>` : '';
+  return `
+    <div class="dl-mini-card ${colKey}" onclick="openDlModal('${dl.id}')" title="Click to edit">
+      <div class="dl-mini-title">${esc(dl.title)}</div>
+      <div class="dl-mini-meta">
+        <span class="dl-due-badge ${ds}">${dueLabel}</span>
+        ${periodBadge}
+        <span class="dl-tag-badge ${tagCls}">${esc(tagLabel)}</span>
+        ${repeatBadge}
+      </div>
+      <div class="dl-mini-actions">
+        <select class="dl-list-status-sel ${dl.status}" onclick="event.stopPropagation()" onchange="changeDlStatus('${dl.id}',this.value)" style="flex:1" title="Change status">
+          <option value="pending" ${dl.status==='pending'?'selected':''}>⏳ Pending</option>
+          <option value="working" ${dl.status==='working'?'selected':''}>🔵 Working</option>
+          <option value="submitted" ${dl.status==='submitted'?'selected':''}>✅ Submitted</option>
+          <option value="overdue" ${dl.status==='overdue'?'selected':''}>🔴 Overdue</option>
+        </select>
+        <button class="dl-del-btn" onclick="event.stopPropagation();deleteDl('${dl.id}')" title="Delete">🗑</button>
+      </div>
+    </div>`;
+}
+
+// View toggle: card / list / board
+function setDlView(mode) {
+  if (!['card','list','board'].includes(mode)) mode = 'card';
+  dlViewMode = mode;
   localStorage.setItem('naj_dl_view', dlViewMode);
   renderDeadlines();
+}
+function toggleDlView() { setDlView(dlViewMode === 'card' ? 'list' : 'card'); }
+
+function refreshDlViewButtons() {
+  ['card','list','board'].forEach(m => {
+    const b = document.getElementById('dl-view-' + m);
+    if (b) b.classList.toggle('active', dlViewMode === m);
+  });
 }
 
 // Group collapse (overdue/pending/working/submitted)
