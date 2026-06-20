@@ -107,8 +107,25 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .col-title { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
 .col-badge { margin-left: auto; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 1px 8px; border-radius: 10px; }
 
-.task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 13px; margin-bottom: 9px; box-shadow: var(--shadow); transition: box-shadow 0.15s, transform 0.1s; position: relative; }
+.task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 13px; margin-bottom: 9px; box-shadow: var(--shadow); transition: box-shadow 0.15s, transform 0.1s; position: relative; z-index: 1; }
 .task-card:hover { box-shadow: var(--shadow2); transform: translateY(-1px); }
+.task-card.menu-open { z-index: 100; }
+.task-card.selected { box-shadow: 0 0 0 2px var(--blue), var(--shadow); }
+
+/* Selection checkbox for merging */
+.task-sel-cb { width: 16px; height: 16px; border: 1.5px solid var(--border2); border-radius: 3px; background: var(--surface); cursor: pointer; opacity: 0; transition: opacity .15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.task-card:hover .task-sel-cb { opacity: 0.6; }
+.task-sel-cb:hover { border-color: var(--blue); opacity: 1 !important; }
+.task-sel-cb.selected, .task-card.selected .task-sel-cb { opacity: 1; background: var(--blue); border-color: var(--blue); }
+.task-sel-cb.selected::after, .task-card.selected .task-sel-cb::after { content: '✓'; color: white; font-size: 10px; font-weight: 700; line-height: 1; }
+
+/* Merge action bar */
+.merge-bar { margin: 0 20px 12px; padding: 12px 16px; background: var(--blue); color: white; border-radius: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 3px 12px rgba(37,99,168,0.25); }
+.merge-bar-count { font-weight: 600; font-size: 13px; flex: 1; }
+.merge-bar button { background: white; color: var(--blue); border: none; padding: 7px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 12px; transition: opacity 0.15s; }
+.merge-bar button:hover { opacity: 0.85; }
+.merge-bar button.merge-cancel { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.5); }
+.merge-bar button.merge-cancel:hover { background: rgba(255,255,255,0.15); opacity: 1; }
 .task-card.is-done { opacity: 0.45; }
 .task-card.is-done .task-title { text-decoration: line-through; color: var(--muted); }
 .task-card.is-overdue { border-left: 3px solid var(--over); background: var(--over-bg); }
@@ -147,7 +164,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .mgr-note-area { width: 100%; background: var(--purple-bg); border: 1px solid #d4c0e6; border-radius: 6px; padding: 7px 9px; font-size: 12px; color: var(--text); margin-top: 6px; font-family: 'DM Sans', sans-serif; resize: vertical; min-height: 50px; outline: none; }
 .mgr-note-area:focus { border-color: var(--purple); }
 
-.ctx-menu { position: absolute; top: 36px; right: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; z-index: 30; min-width: 180px; box-shadow: 0 8px 28px rgba(0,0,0,0.13); }
+.ctx-menu { position: absolute; top: 36px; right: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; z-index: 200; min-width: 180px; box-shadow: 0 8px 28px rgba(0,0,0,0.18); }
 .ctx-item { padding: 7px 12px; font-size: 12px; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 9px; transition: background 0.1s; color: var(--text2); }
 .ctx-item:hover { background: var(--bg2); }
 .ctx-item.danger { color: var(--red); }
@@ -268,8 +285,46 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .cl-list-view { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
 .cl-list-row { display: grid; grid-template-columns: 110px minmax(0,1fr) 110px 110px auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--bg2); transition: background 0.1s; }
-.cl-list-row:hover { background: var(--bg); }
+.cl-list-row:hover { background: var(--bg); cursor: pointer; }
 .cl-list-row:last-child { border-bottom: none; }
+
+/* ═══ ME/YE Kanban Board view ═══ */
+.cl-board-view { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 1024px) { .cl-board-view { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .cl-board-view { grid-template-columns: 1fr; } }
+.cl-board-col { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 220px; }
+.cl-board-col.not_started { border-top: 3px solid var(--muted); }
+.cl-board-col.partial { border-top: 3px solid var(--gold); }
+.cl-board-col.ongoing { border-top: 3px solid var(--blue); }
+.cl-board-col.completed { border-top: 3px solid var(--green); }
+.cl-board-col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.cl-board-col-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text2); }
+.cl-board-col-count { margin-left: auto; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 1px 8px; border-radius: 10px; font-weight: 600; }
+.cl-mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 11px; margin-bottom: 8px; box-shadow: var(--shadow); cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+.cl-mini-card:hover { box-shadow: var(--shadow2); transform: translateY(-1px); }
+.cl-mini-card.not_started { border-left-color: var(--muted); }
+.cl-mini-card.partial { border-left-color: var(--gold); }
+.cl-mini-card.ongoing { border-left-color: var(--blue); }
+.cl-mini-card.completed { border-left-color: var(--green); opacity: .75; }
+.cl-mini-card.has-mgr { border-right: 3px solid var(--purple); }
+.cl-mini-text { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
+.cl-mini-section { font-size: 10px; color: var(--muted); font-style: italic; margin-bottom: 6px; }
+.cl-mini-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.cl-mini-assigned, .cl-mini-date { font-size: 10px; color: var(--text2); background: var(--bg); padding: 2px 7px; border-radius: 4px; }
+.cl-board-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 20px 8px; font-style: italic; }
+
+/* ═══ Checklist item Side Panel (ME/YE) ═══ */
+.cl-side-panel { position: fixed; top: 62px; right: 0; width: 460px; max-width: 100vw; height: calc(100vh - 62px); background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 30px rgba(0,0,0,0.10); z-index: 90; transform: translateX(105%); transition: transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94); display: flex; flex-direction: column; }
+.cl-side-panel.open { transform: translateX(0); }
+.cl-panel-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg2); flex-shrink: 0; }
+.cl-panel-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-panel-save-ind { font-size: 11px; color: var(--muted); min-width: 70px; text-align: right; transition: color 0.2s; }
+.cl-panel-save-ind.saving { color: var(--gold); }
+.cl-panel-save-ind.saved { color: var(--green); }
+.cl-panel-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+@media (max-width: 768px) {
+  .cl-side-panel { top: 52px; height: calc(100vh - 52px); width: 100vw; box-shadow: none; }
+}
 .cl-list-section-bar { background: var(--bg2); padding: 7px 14px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; border-bottom: 1px solid var(--border); }
 .cl-list-text { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cl-list-text.completed-text { text-decoration: line-through; color: var(--muted); }
@@ -744,6 +799,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   </div>
 </div>
 
+<div class="merge-bar" id="merge-bar" style="display:none">
+  <span class="merge-bar-count" id="merge-bar-count">0 selected</span>
+  <button onclick="openMergeModal()">🔗 Merge into one task</button>
+  <button class="merge-cancel" onclick="clearTaskSelection()">Cancel</button>
+</div>
+
 <div class="mgr-toggle-bar" id="board-mgr-toggle" onclick="toggleMgrFilter('board')">
   <span class="mgr-icon">👔</span>
   <span class="mgr-text">Show only items to discuss with manager</span>
@@ -1066,6 +1127,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="cl-view-seg" style="margin-left:auto">
           <button id="me-view-card" onclick="setClView('me','card')" title="Card view">🗂 Card</button>
           <button id="me-view-list" onclick="setClView('me','list')" title="List view">📋 List</button>
+          <button id="me-view-board" onclick="setClView('me','board')" title="Board (kanban)">🗒 Board</button>
         </div>
         <div class="cl-actions">
           <button class="cl-btn cl-btn-gold" onclick="addClSection('me')">+ Add Section</button>
@@ -1121,6 +1183,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="cl-view-seg" style="margin-left:auto">
           <button id="ye-view-card" onclick="setClView('ye','card')" title="Card view">🗂 Card</button>
           <button id="ye-view-list" onclick="setClView('ye','list')" title="List view">📋 List</button>
+          <button id="ye-view-board" onclick="setClView('ye','board')" title="Board (kanban)">🗒 Board</button>
         </div>
         <div class="cl-actions">
           <button class="cl-btn cl-btn-gold" onclick="addClSection('ye')">+ Add Section</button>
@@ -1267,6 +1330,40 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   </div>
 </div>
 
+<!-- MERGE TASKS MODAL -->
+<div class="modal-overlay" id="merge-modal">
+  <div class="modal">
+    <div class="modal-title">🔗 Merge Tasks</div>
+    <div class="modal-task">Combining <strong id="merge-count">0</strong> tasks into one. You can adjust the merged values before confirming.</div>
+    <div class="dl-form-field">
+      <label class="dl-form-label">Tasks being merged</label>
+      <div id="merge-preview" style="max-height:140px;overflow-y:auto;background:var(--bg2);padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.7;border:1px solid var(--border)"></div>
+    </div>
+    <div class="dl-form-field">
+      <label class="dl-form-label">Merged title *</label>
+      <textarea class="dl-form-textarea" id="merge-title" style="min-height:60px" placeholder="The combined task title"></textarea>
+    </div>
+    <div class="dl-form-row">
+      <div class="dl-form-field">
+        <label class="dl-form-label">Priority</label>
+        <select class="dl-form-select" id="merge-priority">
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="dl-form-field">
+        <label class="dl-form-label">Deadline</label>
+        <input class="dl-form-input" id="merge-deadline" type="date">
+      </div>
+    </div>
+    <div class="dl-modal-actions">
+      <button class="dl-save-btn" onclick="confirmMergeTasks()" style="background:var(--blue)">✓ Merge</button>
+      <button class="dl-cancel-btn" onclick="closeMergeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- SNOOZE MODAL -->
 <div class="modal-overlay" id="snooze-modal">
   <div class="modal">
@@ -1300,6 +1397,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   </div>
 </div>
 
+<!-- CHECKLIST ITEM SIDE PANEL (Month End / Year End) -->
+<div class="cl-side-panel" id="cl-side-panel">
+  <div class="cl-panel-head">
+    <span class="cl-panel-title" id="cl-panel-title">Checklist Item</span>
+    <span class="cl-panel-save-ind" id="cl-panel-save-ind"></span>
+    <button class="dl-panel-close" onclick="closeClPanel()" title="Close (Esc)">×</button>
+  </div>
+  <div class="cl-panel-body" id="cl-panel-body"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1308,6 +1415,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 // ════════════════════════════════════════
 let tasks = [], customTags = [], deadlines = [], refCards = [], contacts = [], lessons = [], auditTrail = [];
 let currentFilter = 'all', activeMenu = null, dlFilter = 'all', quickFilter = '';
+let selectedTaskIds = new Set();
 // Deadline view preferences (persisted in localStorage)
 let dlViewMode = localStorage.getItem('naj_dl_view') || 'card'; // 'card' or 'list'
 let dlGroupCollapsed = (function(){ try { return JSON.parse(localStorage.getItem('naj_dl_groups')||'["submitted"]'); } catch(e){ return ['submitted']; } })();
@@ -1784,6 +1892,7 @@ function openMenu(id, e) {
   e.stopPropagation(); closeMenu();
   const card = document.getElementById('card-'+id);
   if (!card) return;
+  card.classList.add('menu-open');
   const t = tasks.find(x=>x.id===id);
   const menu = document.createElement('div');
   menu.className = 'ctx-menu'; menu.id = 'menu-'+id;
@@ -1798,7 +1907,102 @@ function openMenu(id, e) {
   activeMenu = id;
 }
 function closeMenu() {
-  if (activeMenu) { const m = document.getElementById('menu-'+activeMenu); if(m) m.remove(); activeMenu=null; }
+  if (activeMenu) {
+    const card = document.getElementById('card-'+activeMenu);
+    if (card) card.classList.remove('menu-open');
+    const m = document.getElementById('menu-'+activeMenu);
+    if(m) m.remove();
+    activeMenu=null;
+  }
+}
+
+// ════════════════════════════════════════
+// MERGE TASKS — multi-select & combine
+// ════════════════════════════════════════
+function toggleTaskSelection(id, e) {
+  if (e) e.stopPropagation();
+  if (selectedTaskIds.has(id)) selectedTaskIds.delete(id);
+  else selectedTaskIds.add(id);
+  const card = document.getElementById('card-'+id);
+  if (card) {
+    card.classList.toggle('selected', selectedTaskIds.has(id));
+    const cb = card.querySelector('.task-sel-cb');
+    if (cb) cb.classList.toggle('selected', selectedTaskIds.has(id));
+  }
+  updateMergeBar();
+}
+
+function clearTaskSelection() {
+  selectedTaskIds.clear();
+  document.querySelectorAll('.task-card.selected').forEach(c => {
+    c.classList.remove('selected');
+    const cb = c.querySelector('.task-sel-cb');
+    if (cb) cb.classList.remove('selected');
+  });
+  updateMergeBar();
+}
+
+function updateMergeBar() {
+  const bar = document.getElementById('merge-bar');
+  const cnt = document.getElementById('merge-bar-count');
+  if (!bar) return;
+  if (selectedTaskIds.size > 0) {
+    bar.style.display = 'flex';
+    if (cnt) cnt.textContent = `${selectedTaskIds.size} task${selectedTaskIds.size>1?'s':''} selected${selectedTaskIds.size < 2 ? ' (select 1 more to merge)' : ''}`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function openMergeModal() {
+  if (selectedTaskIds.size < 2) {
+    showToast('Select at least 2 tasks to merge.');
+    return;
+  }
+  const taskList = tasks.filter(t => selectedTaskIds.has(t.id));
+  document.getElementById('merge-count').textContent = taskList.length;
+  document.getElementById('merge-preview').innerHTML = taskList.map(t =>
+    `<div style="padding:3px 0">• ${esc(t.title)}${t.deadline?` <span style="color:var(--muted);font-size:11px">(${formatDeadline(t.deadline)})</span>`:''}</div>`
+  ).join('');
+  document.getElementById('merge-title').value = taskList.map(t => t.title).join(' + ');
+  const prioOrder = { high: 3, medium: 2, low: 1 };
+  const sorted = [...taskList].sort((a,b) => (prioOrder[b.priority]||0) - (prioOrder[a.priority]||0));
+  document.getElementById('merge-priority').value = sorted[0].priority || 'medium';
+  const dates = taskList.map(t => t.deadline).filter(Boolean).sort();
+  document.getElementById('merge-deadline').value = dates[0] || '';
+  document.getElementById('merge-modal').classList.add('show');
+}
+
+function closeMergeModal() {
+  document.getElementById('merge-modal').classList.remove('show');
+}
+
+function confirmMergeTasks() {
+  const taskList = tasks.filter(t => selectedTaskIds.has(t.id));
+  if (taskList.length < 2) { showToast('Need at least 2 tasks.'); return; }
+  const newTitle = document.getElementById('merge-title').value.trim();
+  if (!newTitle) { showToast('Merged title cannot be empty.'); return; }
+  const priority = document.getElementById('merge-priority').value;
+  const deadline = document.getElementById('merge-deadline').value;
+  const tag = taskList[0].tag || 'general';
+  let status = 'todo';
+  if (taskList.every(t => t.status === 'done')) status = 'done';
+  else if (taskList.some(t => t.status === 'doing')) status = 'doing';
+  const discussWithMgr = taskList.some(t => t.discussWithMgr);
+  const mgrNotes = taskList.map(t => (t.mgrNotes||'').trim()).filter(Boolean).join(' | ');
+  const merged = {
+    id: uid(), title: newTitle, priority, tag, deadline: deadline || '', status,
+    date: todayStr(), discussWithMgr, mgrNotes
+  };
+  tasks.unshift(merged);
+  const origCount = taskList.length;
+  const origIds = new Set(taskList.map(t => t.id));
+  tasks = tasks.filter(t => !origIds.has(t.id));
+  logAudit('MERGE_TASKS', newTitle, `${origCount} tasks combined`);
+  selectedTaskIds.clear();
+  closeMergeModal();
+  saveData();
+  showToast(`✓ Merged ${origCount} tasks into one.`);
 }
 document.addEventListener('click', closeMenu);
 
@@ -1887,10 +2091,11 @@ function renderCol(elId, list) {
         <textarea class="mgr-note-area" placeholder="What to discuss..." onblur="updateTaskMgrNote('${t.id}',this.value)">${esc(t.mgrNotes||'')}</textarea>
       </div>` : '';
     return `
-      <div class="task-card ${t.status==='done'?'is-done':''} ${ds==='overdue'&&t.status!=='done'?'is-overdue':''} ${ds==='due-soon'&&t.status!=='done'?'is-due-soon':''} ${t.discussWithMgr?'has-mgr':''}" id="card-${t.id}">
+      <div class="task-card ${t.status==='done'?'is-done':''} ${ds==='overdue'&&t.status!=='done'?'is-overdue':''} ${ds==='due-soon'&&t.status!=='done'?'is-due-soon':''} ${t.discussWithMgr?'has-mgr':''} ${selectedTaskIds.has(t.id)?'selected':''}" id="card-${t.id}">
         <div class="card-top">
           <div class="check-box ${t.status==='done'?'checked':''}" onclick="toggleCheck('${t.id}')"></div>
           <span class="task-title">${esc(t.title)}</span>
+          <div class="task-sel-cb ${selectedTaskIds.has(t.id)?'selected':''}" onclick="toggleTaskSelection('${t.id}', event)" title="Select to merge with other tasks"></div>
           <button class="card-menu-btn" onclick="openMenu('${t.id}',event)">⋯</button>
         </div>
         ${dlHtml}
@@ -2979,9 +3184,12 @@ function renderDlPanel() {
   `;
 }
 
-// ESC key closes the panel
+// ESC key closes the panel (deadline or checklist)
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && dlPanelId) closeDlPanel();
+  if (e.key === 'Escape') {
+    if (dlPanelId) closeDlPanel();
+    else if (clPanelItemId) closeClPanel();
+  }
 });
 
 // View toggle: card / list / board
@@ -3461,9 +3669,157 @@ async function saveCl() {
 
 // Set view mode for Month End / Year End
 function setClView(type, mode) {
+  if (!['card','list','board'].includes(mode)) mode = 'card';
   if (type === 'me') { meViewMode = mode; localStorage.setItem('naj_me_view', mode); }
   else { yeViewMode = mode; localStorage.setItem('naj_ye_view', mode); }
   renderChecklist(type);
+}
+
+// Render a compact mini card for the ME/YE Kanban board view
+function renderClMiniCard(it, type) {
+  const dateStr = it.remarksDate ? formatDeadline(it.remarksDate) : '';
+  const assigned = it.assigned ? '👤 ' + esc(it.assigned) : '';
+  const mgrTag = it.discussWithMgr ? '<span class="cl-mini-mgr-tag" title="Discuss with manager">👔</span>' : '';
+  const hasMeta = assigned || dateStr || it.discussWithMgr;
+  return `
+    <div class="cl-mini-card ${it.status||'not_started'} ${it.discussWithMgr?'has-mgr':''}" onclick="openClPanel('${type}', '${it._secId}', '${it.id}')" title="Click to open details">
+      <div class="cl-mini-text">${esc(it.text)}</div>
+      <div class="cl-mini-section">${esc(it._secIcon||'📋')} ${esc(it._secTitle||'')}</div>
+      ${hasMeta ? `<div class="cl-mini-meta">
+        ${assigned ? `<span class="cl-mini-assigned">${assigned}</span>` : ''}
+        ${dateStr ? `<span class="cl-mini-date">📅 ${dateStr}</span>` : ''}
+        ${mgrTag}
+      </div>` : ''}
+    </div>`;
+}
+
+// ════════════════════════════════════════
+// CHECKLIST ITEM SIDE PANEL (ME / YE)
+// ════════════════════════════════════════
+let clPanelType = null, clPanelSecId = null, clPanelItemId = null;
+let clPanelSaveTimers = {};
+
+function openClPanel(type, secId, itemId) {
+  clPanelType = type;
+  clPanelSecId = secId;
+  clPanelItemId = itemId;
+  renderClPanel();
+  document.getElementById('cl-side-panel').classList.add('open');
+}
+
+function closeClPanel() {
+  flushAllClPanelSaves();
+  const wasType = clPanelType;
+  clPanelType = null; clPanelSecId = null; clPanelItemId = null;
+  document.getElementById('cl-side-panel').classList.remove('open');
+  if (wasType) renderChecklist(wasType);
+}
+
+function flushAllClPanelSaves() {
+  Object.keys(clPanelSaveTimers).forEach(key => {
+    clearTimeout(clPanelSaveTimers[key]);
+    delete clPanelSaveTimers[key];
+  });
+  saveCl();
+}
+
+function showClPanelSaving() {
+  const ind = document.getElementById('cl-panel-save-ind');
+  if (ind) { ind.textContent = '⏳ Saving…'; ind.className = 'cl-panel-save-ind saving'; }
+}
+function showClPanelSaved() {
+  const ind = document.getElementById('cl-panel-save-ind');
+  if (ind) { ind.textContent = '✓ Saved'; ind.className = 'cl-panel-save-ind saved'; }
+  setTimeout(() => {
+    if (ind && ind.textContent === '✓ Saved') { ind.textContent = ''; ind.className = 'cl-panel-save-ind'; }
+  }, 2200);
+}
+
+function clPanelSaveField(field, value, immediate) {
+  const list = getClList(clPanelType);
+  const sec = list.find(s => s.id === clPanelSecId);
+  if (!sec) return;
+  const it = sec.items.find(i => i.id === clPanelItemId);
+  if (!it) return;
+  if (field === 'discussWithMgr') it[field] = !!value;
+  else it[field] = value;
+  if (field === 'remarks' && (value||'').trim() && !it.remarksDate) it.remarksDate = todayISO();
+  showClPanelSaving();
+  clearTimeout(clPanelSaveTimers[field]);
+  const delay = immediate ? 0 : 700;
+  clPanelSaveTimers[field] = setTimeout(() => {
+    saveCl();
+    showClPanelSaved();
+    delete clPanelSaveTimers[field];
+  }, delay);
+}
+
+function clPanelChangeStatus(newStatus) {
+  clPanelSaveField('status', newStatus, true);
+  // Re-render panel so the status pill colour updates
+  renderClPanel();
+}
+
+function clPanelDeleteItem() {
+  if (!confirm('Delete this checklist item?')) return;
+  const list = getClList(clPanelType);
+  const sec = list.find(s => s.id === clPanelSecId);
+  if (!sec) return;
+  sec.items = sec.items.filter(i => i.id !== clPanelItemId);
+  const type = clPanelType;
+  closeClPanel();
+  saveCl();
+  renderChecklist(type);
+  showToast('Item deleted.');
+}
+
+function renderClPanel() {
+  const list = getClList(clPanelType);
+  const sec = list.find(s => s.id === clPanelSecId);
+  if (!sec) { closeClPanel(); return; }
+  const it = sec.items.find(i => i.id === clPanelItemId);
+  if (!it) { closeClPanel(); return; }
+  document.getElementById('cl-panel-title').textContent = `${sec.icon||'📋'} ${sec.title}`;
+  const body = document.getElementById('cl-panel-body');
+  body.innerHTML = `
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Task</label>
+      <textarea class="dl-panel-textarea" id="clp-text" rows="2" oninput="clPanelSaveField('text', this.value)">${esc(it.text||'')}</textarea>
+    </div>
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Status</label>
+      <select class="dl-panel-select cl-item-status-sel ${it.status||'not_started'}" id="clp-status" onchange="clPanelChangeStatus(this.value)">
+        <option value="not_started" ${it.status==='not_started'||!it.status?'selected':''}>○ Not Started</option>
+        <option value="partial" ${it.status==='partial'?'selected':''}>◐ Partial</option>
+        <option value="ongoing" ${it.status==='ongoing'?'selected':''}>↻ Ongoing</option>
+        <option value="completed" ${it.status==='completed'?'selected':''}>✓ Completed</option>
+      </select>
+    </div>
+    <div class="dl-panel-row">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Assigned to</label>
+        <input class="dl-panel-input" id="clp-assigned" type="text" value="${esc(it.assigned||'')}" placeholder="Name" oninput="clPanelSaveField('assigned', this.value)">
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Date</label>
+        <input class="dl-panel-input" id="clp-date" type="date" value="${esc(it.remarksDate||'')}" oninput="clPanelSaveField('remarksDate', this.value)">
+      </div>
+    </div>
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Remarks</label>
+      <textarea class="dl-panel-textarea" id="clp-remarks" placeholder="e.g. waiting for approval, partially done because..." oninput="clPanelSaveField('remarks', this.value)">${esc(it.remarks||'')}</textarea>
+    </div>
+    <div class="dl-panel-field dl-panel-mgr-box">
+      <input type="checkbox" id="clp-mgr" ${it.discussWithMgr ? 'checked' : ''} onchange="clPanelSaveField('discussWithMgr', this.checked, true)">
+      <div class="dl-panel-mgr-info">
+        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px">💬 Discuss with manager</div>
+        <input class="dl-panel-input" id="clp-mgr-note" type="text" placeholder="What to discuss with manager…" value="${esc(it.mgrNotes||'')}" style="margin-top:6px" oninput="clPanelSaveField('mgrNotes', this.value)">
+      </div>
+    </div>
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--bg2)">
+      <button class="dl-panel-delete-btn" onclick="clPanelDeleteItem()">🗑 Delete this item</button>
+    </div>
+  `;
 }
 
 // Refresh the assigned-people dropdown for filters
@@ -3523,7 +3879,7 @@ function renderChecklist(type) {
   if (periodEl) periodEl.textContent = getClPeriodLabel(type);
 
   // View-toggle highlighting
-  ['card','list'].forEach(m => {
+  ['card','list','board'].forEach(m => {
     const b = document.getElementById(type + '-view-' + m);
     if (b) b.classList.toggle('active', viewMode === m);
   });
@@ -3590,6 +3946,39 @@ function renderChecklist(type) {
     html += '</div>';
     if (totalShown === 0) html = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">No items match the current filters.</div>';
     wrap.innerHTML = html;
+    return;
+  }
+
+  // BOARD VIEW (4-column kanban by status)
+  if (viewMode === 'board') {
+    const statuses = [
+      { key: 'not_started', label: '○ Not Started' },
+      { key: 'partial',     label: '◐ Partial' },
+      { key: 'ongoing',     label: '↻ Ongoing' },
+      { key: 'completed',   label: '✓ Completed' }
+    ];
+    let bhtml = '<div class="cl-board-view">';
+    statuses.forEach(s => {
+      const items = [];
+      list.forEach(sec => {
+        sec.items.forEach(it => {
+          if (filterOn && !it.discussWithMgr) return;
+          if (!clItemMatchesFilters(type, it)) return;
+          if ((it.status || 'not_started') !== s.key) return;
+          items.push({ ...it, _secId: sec.id, _secTitle: sec.title, _secIcon: sec.icon });
+        });
+      });
+      bhtml += `
+        <div class="cl-board-col ${s.key}">
+          <div class="cl-board-col-head">
+            <span class="cl-board-col-title">${s.label}</span>
+            <span class="cl-board-col-count">${items.length}</span>
+          </div>
+          ${items.length ? items.map(it => renderClMiniCard(it, type)).join('') : '<div class="cl-board-empty">No items</div>'}
+        </div>`;
+    });
+    bhtml += '</div>';
+    wrap.innerHTML = bhtml;
     return;
   }
 
