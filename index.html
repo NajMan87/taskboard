@@ -270,6 +270,46 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .dl-panel-foot .dl-foot-date { font-size: 11px; color: var(--muted); }
 .dl-panel-delete-btn { background: var(--red-bg); border: 1px solid #f5c6c0; color: var(--red); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
 .dl-panel-delete-btn:hover { background: var(--red); color: #fff; }
+
+/* ═══ Financial section (inside side panel) ═══ */
+.dl-fin-block { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; margin-bottom: 10px; }
+.dl-fin-block-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 10px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; }
+.dl-fin-add-btn { margin-left: auto; background: var(--gold); color: #fff; border: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.dl-fin-add-btn:hover { opacity: 0.85; }
+.dl-fin-line-row { display: grid; grid-template-columns: 1fr 100px 22px; gap: 6px; align-items: center; margin-bottom: 5px; }
+.dl-fin-line-row input { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; }
+.dl-fin-line-row input:focus { border-color: var(--gold); }
+.dl-fin-line-row input[type="number"] { text-align: right; font-variant-numeric: tabular-nums; }
+.dl-fin-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 0; line-height: 1; }
+.dl-fin-del:hover { color: var(--red); }
+.dl-fin-empty { font-size: 11px; color: var(--muted); font-style: italic; padding: 6px 0; }
+.dl-fin-total { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 7px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; background: var(--bg2); color: var(--text2); }
+.dl-fin-total.payable { background: #fff8ee; color: var(--gold); border: 1px solid #f0d898; }
+.dl-fin-total.receivable { background: var(--blue-bg); color: var(--blue); border: 1px solid #b8d4f8; }
+.dl-fin-total.nil { background: var(--bg2); color: var(--muted); }
+.dl-fin-total strong { font-size: 14px; font-family: 'Playfair Display', serif; }
+.dl-fin-pay-row { display: grid; grid-template-columns: 100px 90px 1fr 22px; gap: 6px; align-items: center; margin-bottom: 4px; }
+.dl-fin-pay-row input, .dl-fin-pay-row select { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 5px 7px; font-size: 11px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; }
+.dl-fin-pay-row input:focus, .dl-fin-pay-row select:focus { border-color: var(--gold); }
+.dl-fin-pay-row input[type="number"] { text-align: right; font-variant-numeric: tabular-nums; }
+.dl-fin-ref-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 4px 8px; font-size: 11px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; margin-bottom: 6px; }
+.dl-fin-ref-input:focus { border-color: var(--gold); }
+.dl-fin-status-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 7px 10px; border-radius: 5px; background: var(--bg2); font-size: 12px; font-weight: 600; color: var(--text2); }
+.dl-fin-status-pill { font-size: 10px; padding: 3px 9px; border-radius: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.dl-fin-status-pill.pending { background: #fff8ee; color: var(--gold); }
+.dl-fin-status-pill.partial { background: #fff3e0; color: var(--orange); }
+.dl-fin-status-pill.paid { background: var(--green-bg); color: var(--green); }
+.dl-fin-status-pill.received { background: var(--green-bg); color: var(--green); }
+.dl-fin-status-pill.nil { background: var(--bg2); color: var(--muted); }
+
+/* Financial badge on deadline cards */
+.dl-fin-badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dl-fin-badge.pending-payable { background: #fff8ee; color: var(--gold); }
+.dl-fin-badge.pending-receivable { background: var(--blue-bg); color: var(--blue); }
+.dl-fin-badge.partial { background: #fff3e0; color: var(--orange); }
+.dl-fin-badge.paid { background: var(--green-bg); color: var(--green); }
+.dl-fin-badge.received { background: var(--green-bg); color: var(--green); }
+.dl-fin-badge.nil { background: var(--bg2); color: var(--muted); }
 @media (max-width: 768px) {
   .dl-side-panel { top: 52px; height: calc(100vh - 52px); width: 100vw; box-shadow: none; }
 }
@@ -1411,6 +1451,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 // STATE
 // ════════════════════════════════════════
 let tasks = [], customTags = [], deadlines = [], refCards = [], contacts = [], lessons = [], auditTrail = [];
+let bankAccounts = []; // Global list of bank account names for financial tracking
+const CURRENCIES = ['EUR','GBP','USD','QAR','AED','CZK','KWD','BHD','SAR','CHF','JPY'];
+const CURRENCY_SYMBOLS = { EUR:'€', GBP:'£', USD:'$', QAR:'QR ', AED:'AED ', CZK:'Kč ', KWD:'KD ', BHD:'BD ', SAR:'SR ', CHF:'CHF ', JPY:'¥' };
 let currentFilter = 'all', activeMenu = null, dlFilter = 'all', quickFilter = '';
 let selectedTaskIds = new Set();
 // Deadline view preferences (persisted in localStorage)
@@ -2763,6 +2806,7 @@ function renderDlCard(dl) {
           ${periodBadge}
           <span class="dl-tag-badge ${tagCls}">${esc(tagLabel)}</span>
           ${repeatBadge}
+          ${renderFinancialBadge(dl)}
         </div>
       </div>
       <span class="dl-card-collapse-arrow" onclick="event.stopPropagation();toggleDlCardOnly('${dl.id}')" title="Collapse/expand inline">▼</span>
@@ -2810,7 +2854,7 @@ function renderDlListRow(dl) {
       ${dl.ref ? `<div class="dl-list-ref">${esc(dl.ref)}</div>` : ''}
     </div>
     <span class="dl-list-due ${ds}">${dueLabel}</span>
-    <span class="dl-list-tag dl-tag-badge ${tagCls}">${esc(tagLabel)}${repeatBadge?' '+repeatBadge:''}</span>
+    <span class="dl-list-tag dl-tag-badge ${tagCls}">${esc(tagLabel)}${repeatBadge?' '+repeatBadge:''}${renderFinancialBadge(dl)?' '+renderFinancialBadge(dl):''}</span>
     <div class="dl-list-actions">
       <button class="dl-del-btn" onclick="event.stopPropagation();openDlModal('${dl.id}')" title="Edit details">✏️</button>
       <button class="dl-del-btn" onclick="event.stopPropagation();deleteDl('${dl.id}')" title="Delete">🗑</button>
@@ -2865,6 +2909,7 @@ function renderDlMiniCard(dl, colKey) {
         ${periodBadge}
         <span class="dl-tag-badge ${tagCls}">${esc(tagLabel)}</span>
         ${repeatBadge}
+        ${renderFinancialBadge(dl)}
       </div>
       <div class="dl-mini-actions">
         <select class="dl-list-status-sel ${dl.status}" onclick="event.stopPropagation()" onchange="changeDlStatus('${dl.id}',this.value)" style="flex:1" title="Change status">
@@ -2883,6 +2928,249 @@ function renderDlMiniCard(dl, colKey) {
 // ════════════════════════════════════════
 let dlPanelId = null;
 let dlPanelSaveTimers = {};
+
+// ════════════════════════════════════════
+// FINANCIAL TRACKING — line items, payments, computed status
+// ════════════════════════════════════════
+function getFinancialNet(fin) {
+  if (!fin || !Array.isArray(fin.lineItems)) return 0;
+  return fin.lineItems.reduce((s, li) => s + (parseFloat(li.amount) || 0), 0);
+}
+function getFinancialSettled(fin) {
+  if (!fin || !Array.isArray(fin.payments)) return 0;
+  return fin.payments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+}
+function getFinancialDirection(net) {
+  if (net > 0.005) return 'payable';
+  if (net < -0.005) return 'receivable';
+  return 'nil';
+}
+function computeFinStatus(net, settled) {
+  const dir = getFinancialDirection(net);
+  if (dir === 'nil') return 'nil';
+  const absNet = Math.abs(net);
+  const absSet = Math.abs(settled);
+  if (absSet < 0.005) return 'pending';
+  if (absSet >= absNet - 0.01) return dir === 'payable' ? 'paid' : 'received';
+  return 'partial';
+}
+function getFinStatusLabel(status, direction) {
+  if (status === 'nil') return 'NIL';
+  if (status === 'pending') return direction === 'receivable' ? 'PENDING RECEIPT' : 'PENDING PAYMENT';
+  if (status === 'partial') return 'PARTIAL';
+  if (status === 'paid') return 'PAID';
+  if (status === 'received') return 'RECEIVED';
+  return status.toUpperCase();
+}
+function formatMoney(amount, currency, compact) {
+  const sym = CURRENCY_SYMBOLS[currency] || (currency + ' ');
+  const opts = compact ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  return sym + (amount || 0).toLocaleString('en-GB', opts);
+}
+
+// Compact financial badge for cards/list/mini-cards
+function renderFinancialBadge(dl) {
+  const fin = dl && dl.financial;
+  if (!fin) return '';
+  const lineItems = fin.lineItems || [];
+  const payments = fin.payments || [];
+  if (lineItems.length === 0 && payments.length === 0 && !fin.declarationDate) return '';
+  const currency = fin.currency || 'EUR';
+  const net = getFinancialNet(fin);
+  const settled = getFinancialSettled(fin);
+  const direction = getFinancialDirection(net);
+  const status = computeFinStatus(net, settled);
+  let cls = 'nil', label = '';
+  if (status === 'nil') { cls = 'nil'; label = '💰 nil'; }
+  else if (status === 'paid') { cls = 'paid'; label = '✓ ' + formatMoney(Math.abs(net), currency, true); }
+  else if (status === 'received') { cls = 'received'; label = '✓← ' + formatMoney(Math.abs(net), currency, true); }
+  else if (status === 'partial') { cls = 'partial'; label = '½ ' + formatMoney(Math.abs(settled), currency, true) + '/' + formatMoney(Math.abs(net), currency, true).replace(CURRENCY_SYMBOLS[currency] || (currency+' '), ''); }
+  else if (status === 'pending') {
+    cls = direction === 'receivable' ? 'pending-receivable' : 'pending-payable';
+    const arrow = direction === 'receivable' ? '←' : '→';
+    label = arrow + ' ' + formatMoney(Math.abs(net), currency, true);
+  }
+  return `<span class="dl-fin-badge ${cls}" title="${getFinStatusLabel(status, direction)} (${currency})">${label}</span>`;
+}
+
+// Render the full Financial section inside the side panel
+function renderFinancialSection(dl) {
+  const fin = dl.financial || {};
+  const lineItems = fin.lineItems || [];
+  const payments = fin.payments || [];
+  const currency = fin.currency || 'EUR';
+  const net = getFinancialNet(fin);
+  const settled = getFinancialSettled(fin);
+  const direction = getFinancialDirection(net);
+  const status = computeFinStatus(net, settled);
+  const isReceivable = direction === 'receivable';
+
+  return `
+    <div class="dl-panel-row">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Declaration date</label>
+        <input class="dl-panel-input" type="date" value="${esc(fin.declarationDate||'')}" oninput="panelFinSaveBasic('declarationDate', this.value)">
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Currency</label>
+        <select class="dl-panel-select" onchange="panelFinSaveBasic('currency', this.value)">
+          ${CURRENCIES.map(c => `<option value="${c}" ${currency===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="dl-fin-block">
+      <div class="dl-fin-block-head">
+        <span>📊 Line items (signed: + payable, − receivable)</span>
+        <button class="dl-fin-add-btn" onclick="panelFinAddLineItem()">+ Add</button>
+      </div>
+      ${lineItems.length ? lineItems.map(li => `
+        <div class="dl-fin-line-row">
+          <input type="text" placeholder="e.g. Output VAT" value="${esc(li.label||'')}" oninput="panelFinEditLineItem('${li.id}','label',this.value)">
+          <input type="number" step="0.01" placeholder="0.00" value="${li.amount!==undefined?li.amount:''}" oninput="panelFinEditLineItem('${li.id}','amount',this.value)">
+          <button class="dl-fin-del" onclick="panelFinDelLineItem('${li.id}')" title="Remove">✕</button>
+        </div>
+      `).join('') : '<div class="dl-fin-empty">No line items yet — click "+ Add"</div>'}
+      <div class="dl-fin-total ${direction}">
+        <span>${direction==='nil' ? '— NIL —' : direction==='payable' ? 'NET PAYABLE' : 'NET RECEIVABLE'}</span>
+        <strong>${formatMoney(Math.abs(net), currency)}</strong>
+      </div>
+    </div>
+    <div class="dl-fin-block">
+      <div class="dl-fin-block-head">
+        <span>${isReceivable ? '📥 Receipts' : '📤 Payments'} (${payments.length})</span>
+        <button class="dl-fin-add-btn" onclick="panelFinAddPayment()">+ Record</button>
+      </div>
+      ${payments.length ? payments.map(p => `
+        <div class="dl-fin-pay-row">
+          <input type="date" value="${esc(p.date||'')}" oninput="panelFinEditPayment('${p.id}','date',this.value)" title="Date">
+          <input type="number" step="0.01" value="${p.amount!==undefined?p.amount:''}" oninput="panelFinEditPayment('${p.id}','amount',this.value)" placeholder="0.00" title="Amount">
+          <select onchange="onPaymentAccountChange(this,'${p.id}')" title="Bank account">
+            <option value="">— Account —</option>
+            ${bankAccounts.map(a => `<option value="${esc(a)}" ${p.account===a?'selected':''}>${esc(a)}</option>`).join('')}
+            <option value="__add__">+ New account…</option>
+          </select>
+          <button class="dl-fin-del" onclick="panelFinDelPayment('${p.id}')" title="Remove">✕</button>
+        </div>
+        <input class="dl-fin-ref-input" type="text" placeholder="Reference (e.g. wire ref, cheque no.) — optional" value="${esc(p.reference||'')}" oninput="panelFinEditPayment('${p.id}','reference',this.value)">
+      `).join('') : '<div class="dl-fin-empty">No '+(isReceivable?'receipts':'payments')+' yet — click "+ Record"</div>'}
+      ${(direction !== 'nil') ? `
+        <div class="dl-fin-status-row">
+          <span>${formatMoney(Math.abs(settled), currency)} of ${formatMoney(Math.abs(net), currency)}</span>
+          <span class="dl-fin-status-pill ${status}">${getFinStatusLabel(status, direction)}</span>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ── Financial CRUD handlers (auto-save with debounce) ──
+function ensureDlFinancial() {
+  const dl = deadlines.find(x => x.id === dlPanelId);
+  if (!dl) return null;
+  if (!dl.financial) dl.financial = {};
+  if (!Array.isArray(dl.financial.lineItems)) dl.financial.lineItems = [];
+  if (!Array.isArray(dl.financial.payments)) dl.financial.payments = [];
+  if (!dl.financial.currency) dl.financial.currency = 'EUR';
+  return dl;
+}
+
+function panelFinSaveBasic(field, value) {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  dl.financial[field] = value;
+  showPanelSaving();
+  const key = 'fin_basic_' + field;
+  clearTimeout(dlPanelSaveTimers[key]);
+  dlPanelSaveTimers[key] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showPanelSaved();
+    delete dlPanelSaveTimers[key];
+    if (field === 'currency') { renderDlPanel(); renderDeadlines(); }
+  }, 700);
+}
+
+function panelFinAddLineItem() {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  dl.financial.lineItems.push({ id: uid(), label: '', amount: 0 });
+  saveLocal(); pushToCloud();
+  renderDlPanel();
+}
+
+function panelFinEditLineItem(itemId, field, value) {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  const li = dl.financial.lineItems.find(x => x.id === itemId);
+  if (!li) return;
+  if (field === 'amount') li.amount = (value === '' || value === null) ? 0 : (parseFloat(value) || 0);
+  else li[field] = value;
+  showPanelSaving();
+  const key = 'fin_li_' + itemId + '_' + field;
+  clearTimeout(dlPanelSaveTimers[key]);
+  dlPanelSaveTimers[key] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showPanelSaved();
+    delete dlPanelSaveTimers[key];
+    if (field === 'amount') { renderDlPanel(); renderDeadlines(); }
+  }, 700);
+}
+
+function panelFinDelLineItem(itemId) {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  dl.financial.lineItems = dl.financial.lineItems.filter(x => x.id !== itemId);
+  saveLocal(); pushToCloud();
+  renderDlPanel();
+  renderDeadlines();
+}
+
+function panelFinAddPayment() {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  dl.financial.payments.push({ id: uid(), date: todayISO(), amount: 0, account: '', reference: '' });
+  saveLocal(); pushToCloud();
+  renderDlPanel();
+}
+
+function panelFinEditPayment(payId, field, value) {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  const p = dl.financial.payments.find(x => x.id === payId);
+  if (!p) return;
+  if (field === 'amount') p.amount = (value === '' || value === null) ? 0 : (parseFloat(value) || 0);
+  else p[field] = value;
+  showPanelSaving();
+  const key = 'fin_p_' + payId + '_' + field;
+  clearTimeout(dlPanelSaveTimers[key]);
+  dlPanelSaveTimers[key] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showPanelSaved();
+    delete dlPanelSaveTimers[key];
+    if (field === 'amount' || field === 'account') { renderDlPanel(); renderDeadlines(); }
+  }, 700);
+}
+
+function panelFinDelPayment(payId) {
+  const dl = ensureDlFinancial(); if (!dl) return;
+  dl.financial.payments = dl.financial.payments.filter(x => x.id !== payId);
+  saveLocal(); pushToCloud();
+  renderDlPanel();
+  renderDeadlines();
+}
+
+// Bank account dropdown — handle "+ New account…" option
+function onPaymentAccountChange(sel, payId) {
+  if (sel.value === '__add__') {
+    const raw = prompt('New bank account name:\n(e.g. AKH-NL-RABO, AKH-UK-Barclays, AKH-CZ-CSOB)');
+    sel.value = ''; // reset
+    if (!raw || !raw.trim()) return;
+    const clean = raw.trim().slice(0, 40);
+    if (!bankAccounts.includes(clean)) {
+      bankAccounts.push(clean);
+      saveLocal();
+      pushToCloud();
+      showToast(`✓ Bank account "${clean}" added.`);
+    }
+    panelFinEditPayment(payId, 'account', clean);
+    renderDlPanel(); // refresh so new account appears in all dropdowns
+    return;
+  }
+  panelFinEditPayment(payId, 'account', sel.value);
+}
 
 function openDlPanel(id) {
   const dl = deadlines.find(x => x.id === id);
@@ -3161,6 +3449,10 @@ function renderDlPanel() {
     <div class="dl-panel-section">
       <div class="dl-panel-section-title">📝 Notes</div>
       <textarea class="dl-panel-textarea" id="dlp-notes" placeholder="Reference files, contacts, important details…" oninput="panelSaveField('notes', this.value)">${esc(dl.notes||'')}</textarea>
+    </div>
+    <div class="dl-panel-section">
+      <div class="dl-panel-section-title">💰 Financial</div>
+      ${renderFinancialSection(dl)}
     </div>
     <div class="dl-panel-section">
       <div class="dl-panel-section-title">📎 Attachments (${atts.length})
@@ -4681,13 +4973,25 @@ function exportExcel() {
   });
 
   // Deadlines sheet
-  let dlCsv = 'Title,Status,Due Date,Tag,Ref/Entity,Repeat,Notes,Checklist Done,Checklist Total,Submitted Date,Submitted Notes,Submitted Issues\n';
+  let dlCsv = 'Title,Status,Due Date,Period,Tag,Ref/Entity,Repeat,Notes,Checklist Done,Checklist Total,Submitted Date,Submitted Notes,Submitted Issues,Declaration Date,Currency,Net Amount,Direction,Settled,Settlement Status,Line Items,Payments\n';
   deadlines.forEach(dl => {
     const cl = dl.checklist || [];
     const done = cl.filter(c => c.done).length;
-    dlCsv += [cell(dl.title), cell(dl.status), cell(dl.date), cell(dl.tag), cell(dl.ref||''),
+    const fin = dl.financial || {};
+    const lineItems = fin.lineItems || [];
+    const payments = fin.payments || [];
+    const net = getFinancialNet(fin);
+    const settled = getFinancialSettled(fin);
+    const direction = getFinancialDirection(net);
+    const status = computeFinStatus(net, settled);
+    const liStr = lineItems.map(li => `${li.label||''}: ${li.amount||0}`).join(' | ');
+    const payStr = payments.map(p => `${p.date||''} ${p.amount||0} ${p.account||''} ${p.reference||''}`.trim()).join(' | ');
+    dlCsv += [cell(dl.title), cell(dl.status), cell(dl.date), cell(dl.period||''), cell(dl.tag), cell(dl.ref||''),
               cell(dl.repeat||'none'), cell(dl.notes||''), cell(done), cell(cl.length),
-              cell(dl.submittedDate||''), cell(dl.submittedNotes||''), cell(dl.submittedIssues||'')].join(',') + '\n';
+              cell(dl.submittedDate||''), cell(dl.submittedNotes||''), cell(dl.submittedIssues||''),
+              cell(fin.declarationDate||''), cell(fin.currency||''), cell(net.toFixed(2)),
+              cell(direction), cell(settled.toFixed(2)), cell(getFinStatusLabel(status, direction)),
+              cell(liStr), cell(payStr)].join(',') + '\n';
   });
 
   // Lessons learned sheet
@@ -4878,6 +5182,7 @@ function getAllData() {
   return {
     tasks, customTags, deadlines, refCards, contacts, lessons, auditTrail,
     meChecklist, yeChecklist, meHistory, yeHistory,
+    bankAccounts,
     version: Date.now()
   };
 }
@@ -4895,6 +5200,7 @@ function applyAllData(d) {
   if (Array.isArray(d.yeChecklist)) yeChecklist = d.yeChecklist;
   if (Array.isArray(d.meHistory)) meHistory = d.meHistory;
   if (Array.isArray(d.yeHistory)) yeHistory = d.yeHistory;
+  if (Array.isArray(d.bankAccounts)) bankAccounts = d.bankAccounts;
 }
 
 // Boot
