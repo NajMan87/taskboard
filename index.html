@@ -599,6 +599,40 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ref-save-indicator { font-size: 11px; min-height: 16px; transition: color 0.2s; font-family: 'DM Sans', sans-serif; }
 .ref-card-pinned { border-color: #e8c97a; box-shadow: 0 0 0 2px rgba(193,127,42,0.12), var(--shadow); }
 .ref-card-pinned .ref-card-head { background: linear-gradient(135deg, #fffbf0 0%, var(--surface) 100%); }
+
+/* ═══ NEW: compact preview cards (click to open in panel) ═══ */
+.ref-card.preview-mode { cursor: pointer; padding: 0; overflow: hidden; transition: all 0.15s; }
+.ref-card.preview-mode:hover { box-shadow: 0 6px 22px rgba(0,0,0,0.10); transform: translateY(-2px); border-color: var(--gold); }
+.ref-card-preview-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--bg2); }
+.ref-card-preview-icon { font-size: 20px; flex-shrink: 0; }
+.ref-card-preview-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ref-card-preview-pin { color: var(--gold); font-size: 13px; }
+.ref-card-preview-body { padding: 12px 14px; max-height: 140px; overflow: hidden; position: relative; font-size: 12.5px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.ref-card-preview-body.has-overflow::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 36px; background: linear-gradient(transparent, var(--surface) 80%); pointer-events: none; }
+.ref-card-preview-empty { font-style: italic; color: var(--muted); }
+.ref-card-preview-meta { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--bg2); background: var(--bg); font-size: 10px; color: var(--muted); }
+.ref-card-preview-meta .ref-len { margin-left: auto; }
+
+/* Rich text toolbar inside side panel */
+.ref-toolbar { display: flex; flex-wrap: wrap; gap: 3px; padding: 6px 8px; background: var(--bg2); border: 1px solid var(--border); border-bottom: none; border-radius: 7px 7px 0 0; align-items: center; position: relative; }
+.ref-tb-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--text); cursor: pointer; min-width: 28px; height: 26px; line-height: 18px; transition: all .12s; }
+.ref-tb-btn:hover { background: var(--gold); color: #fff; border-color: var(--gold); }
+.ref-tb-select { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text); cursor: pointer; height: 26px; outline: none; }
+.ref-tb-select:focus { border-color: var(--gold); }
+.ref-tb-sep { width: 1px; height: 18px; background: var(--border); margin: 0 3px; }
+
+/* Contenteditable editor area */
+.ref-editor { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 7px 7px; padding: 12px 14px; min-height: 220px; max-height: 50vh; overflow-y: auto; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.7; color: var(--text); outline: none; }
+.ref-editor:focus { border-color: var(--gold); }
+.ref-editor p { margin: 0 0 6px; }
+.ref-editor ul, .ref-editor ol { padding-left: 24px; margin: 6px 0; }
+.ref-editor blockquote { border-left: 3px solid var(--gold); padding: 4px 12px; margin: 6px 0; color: var(--text2); font-style: italic; background: var(--bg2); border-radius: 0 4px 4px 0; }
+.ref-editor:empty::before { content: attr(data-placeholder); color: var(--muted); font-style: italic; pointer-events: none; }
+
+/* Color picker popup */
+.ref-color-picker { position: absolute; z-index: 250; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); display: grid; grid-template-columns: repeat(4, 22px); gap: 4px; }
+.ref-color-swatch { width: 22px; height: 22px; border-radius: 4px; cursor: pointer; border: 1.5px solid rgba(0,0,0,0.08); transition: transform .1s; }
+.ref-color-swatch:hover { transform: scale(1.15); border-color: var(--text); }
 .emoji-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
 .emoji-opt { width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:var(--bg2); cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
 .emoji-opt:hover, .emoji-opt.selected { background:var(--gold-bg); border-color:var(--gold); }
@@ -1051,7 +1085,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
           <span class="ref-search-icon">🔍</span>
           <input class="ref-search" id="ref-search" placeholder="Search…" oninput="renderReference()">
         </div>
-        <button class="btn-add-ref" onclick="openRefModal()">+ Add Card</button>
+        <button class="btn-add-ref" onclick="addRefCardQuick()">+ Add Card</button>
       </div>
     </div>
     <div class="ref-scroll-body">
@@ -1444,6 +1478,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="cl-panel-body" id="cl-panel-body"></div>
 </div>
 
+<!-- REFERENCE CARD SIDE PANEL (rich-text editor) -->
+<div class="dl-side-panel" id="ref-side-panel">
+  <div class="dl-panel-head">
+    <span class="dl-panel-title" id="ref-panel-title">Reference Card</span>
+    <span class="dl-panel-save-ind" id="ref-panel-save-ind"></span>
+    <button class="dl-panel-close" onclick="closeRefPanel()" title="Close (Esc)">×</button>
+  </div>
+  <div class="dl-panel-body" id="ref-panel-body"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1582,15 +1626,28 @@ function googleSignIn(opts) {
   return new Promise((resolve) => {
     if (isTokenValid() && !opts.force) { resolve(true); return; }
     try {
+      const cachedEmail = localStorage.getItem('naj_gd_email') || '';
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GDRIVE_CLIENT_ID,
         scope: GDRIVE_SCOPE,
-        callback: (resp) => {
+        callback: async (resp) => {
           if (resp.access_token) {
             gdToken = resp.access_token;
             gdExpiry = Date.now() + (resp.expires_in * 1000);
             localStorage.setItem('naj_gd_token', gdToken);
             localStorage.setItem('naj_gd_expiry', gdExpiry.toString());
+            // Cache user email so future silent refreshes can hint the right account
+            if (!cachedEmail) {
+              try {
+                const meRes = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+                  headers: { Authorization: `Bearer ${gdToken}` }
+                });
+                const me = await meRes.json();
+                if (me && me.user && me.user.emailAddress) {
+                  localStorage.setItem('naj_gd_email', me.user.emailAddress);
+                }
+              } catch(e) {}
+            }
             scheduleTokenRefresh();
             resolve(true);
           } else { resolve(false); }
@@ -1598,8 +1655,10 @@ function googleSignIn(opts) {
         error_callback: () => resolve(false)
       });
       // empty prompt → silent; 'consent' → forces UI
-      const prompt = opts.interactive ? 'consent' : '';
-      client.requestAccessToken({ prompt: prompt });
+      const overrideConfig = { prompt: opts.interactive ? 'consent' : '' };
+      // Hint with cached email so Google can skip the account picker (multi-account browsers)
+      if (cachedEmail) overrideConfig.hint = cachedEmail;
+      client.requestAccessToken(overrideConfig);
       // Timeout safety: if silent doesn't resolve within 3s, give up
       if (!opts.interactive) {
         setTimeout(() => resolve(false), 3000);
@@ -3479,11 +3538,12 @@ function renderDlPanel() {
   `;
 }
 
-// ESC key closes the panel (deadline or checklist)
+// ESC key closes whichever panel is open
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     if (dlPanelId) closeDlPanel();
     else if (clPanelItemId) closeClPanel();
+    else if (refPanelId) closeRefPanel();
   }
 });
 
@@ -3641,12 +3701,276 @@ function deleteRefCard(id) {
   saveLocal(); pushToCloud(); renderReference();
   showToast('Card deleted.');
 }
+// ════════════════════════════════════════
+// REFERENCE CARD SIDE PANEL (rich-text editor)
+// ════════════════════════════════════════
+let refPanelId = null;
+let refPanelSaveTimers = {};
+
+function openRefPanel(id) {
+  const card = refCards.find(c => c.id === id);
+  if (!card) return;
+  const panelEl = document.getElementById('ref-side-panel');
+  if (refPanelId === id && panelEl && panelEl.classList.contains('open')) {
+    closeRefPanel();
+    return;
+  }
+  if (refPanelId && refPanelId !== id) flushAllRefPanelSaves();
+  refPanelId = id;
+  renderRefPanel();
+  panelEl.classList.add('open');
+}
+
+function closeRefPanel() {
+  flushAllRefPanelSaves();
+  refPanelId = null;
+  document.getElementById('ref-side-panel').classList.remove('open');
+  hideRefColorPicker();
+  renderReference();
+}
+
+function flushAllRefPanelSaves() {
+  Object.keys(refPanelSaveTimers).forEach(k => {
+    clearTimeout(refPanelSaveTimers[k]);
+    delete refPanelSaveTimers[k];
+  });
+  saveLocal(); pushToCloud();
+}
+
+function showRefPanelSaving() {
+  const ind = document.getElementById('ref-panel-save-ind');
+  if (ind) { ind.textContent = '⏳ Saving…'; ind.className = 'dl-panel-save-ind saving'; }
+}
+function showRefPanelSaved() {
+  const ind = document.getElementById('ref-panel-save-ind');
+  if (ind) { ind.textContent = '✓ Saved'; ind.className = 'dl-panel-save-ind saved'; }
+  setTimeout(() => {
+    if (ind && ind.textContent === '✓ Saved') { ind.textContent = ''; ind.className = 'dl-panel-save-ind'; }
+  }, 2200);
+}
+
+function refPanelSaveField(field, value, immediate) {
+  const card = refCards.find(c => c.id === refPanelId);
+  if (!card) return;
+  if (field === 'pinned') card[field] = !!value;
+  else card[field] = value;
+  showRefPanelSaving();
+  clearTimeout(refPanelSaveTimers[field]);
+  refPanelSaveTimers[field] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showRefPanelSaved();
+    delete refPanelSaveTimers[field];
+    if (field === 'title' || field === 'icon' || field === 'pinned') {
+      // Update header title and refresh preview cards behind
+      const t = document.getElementById('ref-panel-title');
+      const c = refCards.find(x => x.id === refPanelId);
+      if (t && c) t.textContent = `${c.icon||'📋'} ${c.title||'Untitled'}`;
+    }
+  }, immediate ? 0 : 700);
+}
+
+function refPanelSaveContent(html) {
+  const card = refCards.find(c => c.id === refPanelId);
+  if (!card) return;
+  card.notes = html;
+  showRefPanelSaving();
+  clearTimeout(refPanelSaveTimers['notes']);
+  refPanelSaveTimers['notes'] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showRefPanelSaved();
+    delete refPanelSaveTimers['notes'];
+  }, 700);
+}
+
+function refPanelDelete() {
+  if (!confirm('Delete this reference card? This cannot be undone.')) return;
+  const card = refCards.find(c => c.id === refPanelId);
+  if (card) logAudit('DELETE_REF_CARD', card.title || 'Untitled', '(via panel)');
+  refCards = refCards.filter(c => c.id !== refPanelId);
+  refPanelId = null;
+  document.getElementById('ref-side-panel').classList.remove('open');
+  saveLocal(); pushToCloud();
+  renderReference();
+  showToast('Card deleted.');
+}
+
+// Quick-add: creates an empty card and opens it in the panel
+function addRefCardQuick() {
+  const newCard = { id: uid(), title: 'New card', icon: '📋', notes: '', pinned: false, created: todayStr() };
+  refCards.unshift(newCard);
+  saveLocal(); pushToCloud();
+  renderReference();
+  openRefPanel(newCard.id);
+  // Auto-focus the title for quick rename
+  setTimeout(() => {
+    const t = document.getElementById('refp-title');
+    if (t) { t.focus(); t.select(); }
+  }, 320);
+}
+
+function renderRefPanel() {
+  const card = refCards.find(c => c.id === refPanelId);
+  if (!card) { closeRefPanel(); return; }
+  document.getElementById('ref-panel-title').textContent = `${card.icon||'📋'} ${card.title || 'Untitled'}`;
+  const body = document.getElementById('ref-panel-body');
+  const icons = ['📋','📘','📕','📗','📙','🔖','📎','📌','📑','📂','💼','🧾','💳','🏦','🏛️','📊','📈','📉','💰','💵','💶','💷','💴','🌍','🌐','📅','⏰','⚠️','❗','✅','✏️','🔑','🔐','📧','📞','📱','💻','🖨️','📁','🗂️','📤','📥','🎯','🚀','⭐','💡','🛠️','🔍','📝'];
+  body.innerHTML = `
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Title</label>
+      <input class="dl-panel-input" id="refp-title" type="text" value="${esc(card.title||'')}" oninput="refPanelSaveField('title', this.value)">
+    </div>
+    <div class="dl-panel-row">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Icon</label>
+        <select class="dl-panel-select" id="refp-icon" onchange="refPanelSaveField('icon', this.value, true)" style="font-size:18px">
+          ${icons.map(ic => `<option value="${ic}" ${card.icon===ic?'selected':''}>${ic}</option>`).join('')}
+        </select>
+      </div>
+      <div class="dl-panel-field dl-panel-mgr-box" style="background:#fff8ee;border-color:#f0d898">
+        <input type="checkbox" id="refp-pinned" ${card.pinned?'checked':''} onchange="refPanelSaveField('pinned', this.checked, true)">
+        <div class="dl-panel-mgr-info">
+          <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.6px">📌 Pinned</div>
+          <div style="margin-top:2px">Show this card at the top of the library.</div>
+        </div>
+      </div>
+    </div>
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Content</label>
+      <div class="ref-toolbar">
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+        <div class="ref-tb-sep"></div>
+        <select class="ref-tb-select" onmousedown="event.preventDefault()" onchange="refFont(this.value);this.value=''" title="Font family">
+          <option value="">Font ▾</option>
+          <option value="DM Sans, sans-serif">Sans</option>
+          <option value="Playfair Display, Georgia, serif">Serif</option>
+          <option value="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Mono</option>
+        </select>
+        <select class="ref-tb-select" onmousedown="event.preventDefault()" onchange="refSize(this.value);this.value=''" title="Text size">
+          <option value="">Size ▾</option>
+          <option value="2">Small</option>
+          <option value="3">Normal</option>
+          <option value="5">Large</option>
+          <option value="6">Huge</option>
+        </select>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="toggleRefColorPicker(event)" title="Text color">A▾</button>
+        <div class="ref-tb-sep"></div>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('insertUnorderedList')" title="Bullet list">•</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('insertOrderedList')" title="Numbered list">1.</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refBlock('blockquote')" title="Quote">"</button>
+        <div class="ref-tb-sep"></div>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('removeFormat')" title="Clear formatting">✕</button>
+      </div>
+      <div class="ref-editor" id="refp-editor" contenteditable="true" data-placeholder="Start typing… use the toolbar above to format text." oninput="refPanelSaveContent(this.innerHTML)"></div>
+    </div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bg2);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--muted)">Created ${esc(card.created||'—')}</span>
+      <button class="dl-panel-delete-btn" onclick="refPanelDelete()">🗑 Delete card</button>
+    </div>
+  `;
+  // Set editor content: HTML if present, otherwise treat as plain text
+  const ed = document.getElementById('refp-editor');
+  if (ed) {
+    const content = card.notes || '';
+    if (content && /<[a-z][^>]*>/i.test(content)) {
+      ed.innerHTML = content;
+    } else {
+      ed.innerHTML = esc(content).replace(/\n/g, '<br>');
+    }
+  }
+}
+
+// Rich-text command — wraps execCommand and re-triggers save
+function refCmd(cmd) {
+  const ed = document.getElementById('refp-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand(cmd, false, null);
+  refPanelSaveContent(ed.innerHTML);
+}
+function refFont(fontFamily) {
+  if (!fontFamily) return;
+  const ed = document.getElementById('refp-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand('fontName', false, fontFamily);
+  refPanelSaveContent(ed.innerHTML);
+}
+function refSize(size) {
+  if (!size) return;
+  const ed = document.getElementById('refp-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand('fontSize', false, size);
+  refPanelSaveContent(ed.innerHTML);
+}
+function refBlock(tag) {
+  const ed = document.getElementById('refp-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand('formatBlock', false, '<' + tag + '>');
+  refPanelSaveContent(ed.innerHTML);
+}
+function refColor(color) {
+  const ed = document.getElementById('refp-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand('foreColor', false, color);
+  hideRefColorPicker();
+  refPanelSaveContent(ed.innerHTML);
+}
+
+// Color picker popup
+function toggleRefColorPicker(e) {
+  e.stopPropagation();
+  if (document.getElementById('ref-color-picker')) { hideRefColorPicker(); return; }
+  const picker = document.createElement('div');
+  picker.id = 'ref-color-picker';
+  picker.className = 'ref-color-picker';
+  const colors = [
+    ['#1a1714','Default'], ['#5c554c','Gray'], ['#c8311c','Red'], ['#c95f0a','Orange'],
+    ['#b08d3a','Gold'], ['#5e8a3a','Green'], ['#2563a8','Blue'], ['#7a4cb0','Purple']
+  ];
+  picker.innerHTML = colors.map(([c, n]) =>
+    `<div class="ref-color-swatch" style="background:${c}" title="${n}" onclick="refColor('${c}')"></div>`
+  ).join('');
+  // Position below the toolbar button
+  const btn = e.target;
+  const rect = btn.getBoundingClientRect();
+  const toolbar = btn.closest('.ref-toolbar');
+  toolbar.appendChild(picker);
+  picker.style.top = (btn.offsetTop + btn.offsetHeight + 4) + 'px';
+  picker.style.left = btn.offsetLeft + 'px';
+  setTimeout(() => {
+    document.addEventListener('click', closeRefColorPickerOnOutside);
+  }, 30);
+}
+function closeRefColorPickerOnOutside(e) {
+  if (e.target.closest('#ref-color-picker') || e.target.classList.contains('ref-tb-btn')) return;
+  hideRefColorPicker();
+}
+function hideRefColorPicker() {
+  const p = document.getElementById('ref-color-picker');
+  if (p) p.remove();
+  document.removeEventListener('click', closeRefColorPickerOnOutside);
+}
+
 function renderReference() {
   const grid = document.getElementById('ref-grid');
   if (!grid) return;
   const q = (document.getElementById('ref-search')?.value || '').toLowerCase();
   let shown = [...refCards];
-  if (q) shown = shown.filter(c => c.title.toLowerCase().includes(q) || (c.notes||'').toLowerCase().includes(q));
+  if (q) {
+    shown = shown.filter(c => {
+      const titleMatch = (c.title || '').toLowerCase().includes(q);
+      const notes = c.notes || '';
+      // Match HTML content via stripped text
+      const plain = stripHtml(notes).toLowerCase();
+      return titleMatch || plain.includes(q);
+    });
+  }
   shown.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
   if (!shown.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted);font-size:13px;">
@@ -3654,20 +3978,33 @@ function renderReference() {
       ${q ? 'No results found.' : 'No cards yet. Click <strong>+ Add Card</strong> to create your first reference card.'}</div>`;
     return;
   }
-  grid.innerHTML = shown.map(card => `
-    <div class="ref-card ${card.pinned?'ref-card-pinned':''}" id="refcard-${card.id}">
-      <div class="ref-card-head">
-        <div class="ref-card-icon">${card.icon||'📋'}</div>
-        <div class="ref-card-title" contenteditable="true" onblur="updateRefTitle('${card.id}',this.textContent.trim())">${esc(card.title)}</div>
-        <div class="ref-head-actions">
-          <button class="ref-icon-btn" onclick="togglePinRef('${card.id}')" title="${card.pinned?'Unpin':'Pin to top'}" style="${card.pinned?'color:var(--gold)':''}">${card.pinned ? '📌' : '📍'}</button>
-          <button class="ref-icon-btn danger" onclick="deleteRefCard('${card.id}')" title="Delete card">🗑</button>
-        </div>
+  grid.innerHTML = shown.map(card => {
+    const plain = stripHtml(card.notes || '');
+    const preview = plain.length > 0 ? esc(plain.slice(0, 320)) : '<span class="ref-card-preview-empty">Empty — click to add content…</span>';
+    const overflow = plain.length > 320;
+    const charCount = plain.length;
+    return `
+    <div class="ref-card preview-mode ${card.pinned?'ref-card-pinned':''}" id="refcard-${card.id}" onclick="openRefPanel('${card.id}')" title="Click to open">
+      <div class="ref-card-preview-head">
+        <span class="ref-card-preview-icon">${card.icon||'📋'}</span>
+        <span class="ref-card-preview-title">${esc(card.title || 'Untitled')}</span>
+        ${card.pinned ? '<span class="ref-card-preview-pin" title="Pinned">📌</span>' : ''}
       </div>
-      <div class="ref-card-body">
-        <textarea class="ref-notes-area" id="ref-notes-${card.id}" placeholder="Type anything — VAT numbers, bank details, contacts, instructions…" oninput="autoSaveRefNotes('${card.id}')" onblur="flushRefNotes('${card.id}')">${esc(card.notes||'')}</textarea>
+      <div class="ref-card-preview-body ${overflow?'has-overflow':''}">${preview}</div>
+      <div class="ref-card-preview-meta">
+        <span>${esc(card.created || '')}</span>
+        <span class="ref-len">${charCount} char${charCount===1?'':'s'}</span>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+// Strip HTML tags to plain text (for previews and search)
+function stripHtml(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return (tmp.textContent || '').trim();
 }
 
 // ════════════════════════════════════════
