@@ -637,6 +637,52 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ref-color-swatch { width: 22px; height: 22px; border-radius: 4px; cursor: pointer; border: 1.5px solid rgba(0,0,0,0.08); transition: transform .1s; }
 .ref-color-swatch:hover { transform: scale(1.15); border-color: var(--text); }
 
+/* ═══ Sync with Manager tab ═══ */
+.mgr-tab-wrap { padding: 18px 24px 60px; max-width: 1200px; margin: 0 auto; }
+.mgr-tab-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+.mgr-tab-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--text); margin: 0; }
+.mgr-filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.mgr-filter-chip { padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all .15s; display: inline-flex; align-items: center; gap: 6px; font-family: 'DM Sans', sans-serif; }
+.mgr-filter-chip:hover { background: var(--bg2); }
+.mgr-filter-chip.active { background: var(--purple); color: white; border-color: var(--purple); }
+.mgr-filter-chip-count { background: var(--bg2); color: var(--muted); padding: 1px 7px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+.mgr-filter-chip.active .mgr-filter-chip-count { background: rgba(255,255,255,0.25); color: white; }
+.mgr-source-bar { display: flex; gap: 6px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.mgr-source-chip { padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all .15s; font-family: 'DM Sans', sans-serif; }
+.mgr-source-chip:hover { background: var(--bg2); }
+.mgr-source-chip.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+
+.mgr-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow); transition: all .15s; border-left: 3px solid var(--purple); }
+.mgr-item:hover { box-shadow: var(--shadow2); }
+.mgr-item.clarified { background: var(--green-bg, #f4fff0); border-left-color: var(--green); opacity: 0.92; }
+.mgr-item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.mgr-src-badge { font-size: 9px; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+.mgr-src-badge.task { background: #fff3e0; color: var(--orange); }
+.mgr-src-badge.deadline { background: var(--blue-bg); color: var(--blue); }
+.mgr-src-badge.me, .mgr-src-badge.ye { background: #f0e9e1; color: var(--text2); }
+.mgr-item-title { font-weight: 600; color: var(--text); font-size: 14px; cursor: pointer; flex: 1; min-width: 200px; }
+.mgr-item-title:hover { color: var(--purple); text-decoration: underline; }
+.mgr-section-tag { font-size: 11px; color: var(--muted); font-style: italic; }
+.mgr-item-date { font-size: 11px; color: var(--muted); }
+.mgr-item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+@media (max-width: 768px) { .mgr-item-grid { grid-template-columns: 1fr; } }
+.mgr-field-label { display: block; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.mgr-field-label.response-label { color: var(--purple); }
+.mgr-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); outline: none; resize: vertical; min-height: 70px; line-height: 1.5; transition: border-color .15s; }
+.mgr-textarea:focus { border-color: var(--purple); }
+.mgr-textarea.response { background: #faf7ff; }
+.mgr-item-foot { display: flex; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid var(--bg2); flex-wrap: wrap; }
+.mgr-clarified-cb { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.mgr-clarified-cb input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); }
+.mgr-clarified-cb label { font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; }
+.mgr-clarified-date { font-size: 11px; color: var(--green); font-weight: 600; }
+.mgr-saving-ind { font-size: 11px; color: var(--muted); margin-left: auto; transition: color 0.2s; }
+.mgr-saving-ind.saving { color: var(--gold); }
+.mgr-saving-ind.saved { color: var(--green); }
+.mgr-empty { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 13px; }
+.mgr-empty-icon { font-size: 40px; margin-bottom: 12px; }
+.mgr-empty-hint { font-size: 12px; margin-top: 10px; color: var(--muted); }
+
 /* Combined Icon + Title row (saves vertical space in panel) */
 .ref-title-row { display: flex; gap: 8px; align-items: stretch; }
 .ref-icon-select { width: 60px; flex-shrink: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 6px 4px; font-size: 18px; text-align: center; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; cursor: pointer; }
@@ -850,6 +896,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="tab-btn" onclick="switchTab('contacts',this)">📇 Contacts</button>
   <button class="tab-btn" onclick="switchTab('monthend',this)">📋 Month End</button>
   <button class="tab-btn" onclick="switchTab('yearend',this)">📆 Year End</button>
+  <button class="tab-btn" onclick="switchTab('manager',this)">🤝 Sync with Manager</button>
   <button class="tab-btn" onclick="switchTab('notifications',this)">🔔 Notifications</button>
 </div>
 
@@ -1315,6 +1362,27 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 </div>
 
 <!-- ═══ NOTIFICATIONS TAB ═══ -->
+<div class="tab-pane" id="tab-manager">
+  <div class="mgr-tab-wrap">
+    <div class="mgr-tab-head">
+      <h2 class="mgr-tab-title">🤝 Sync with Manager</h2>
+    </div>
+    <div class="mgr-filter-bar">
+      <button class="mgr-filter-chip active" id="mgr-chip-active" onclick="setMgrFilter('active')">Active <span class="mgr-filter-chip-count" id="mgr-cnt-active">0</span></button>
+      <button class="mgr-filter-chip" id="mgr-chip-clarified" onclick="setMgrFilter('clarified')">Clarified <span class="mgr-filter-chip-count" id="mgr-cnt-clarified">0</span></button>
+      <button class="mgr-filter-chip" id="mgr-chip-all" onclick="setMgrFilter('all')">All <span class="mgr-filter-chip-count" id="mgr-cnt-all">0</span></button>
+      <div class="mgr-source-bar">
+        <button class="mgr-source-chip active" id="mgr-src-all" onclick="setMgrSource('all')">All sources</button>
+        <button class="mgr-source-chip" id="mgr-src-task" onclick="setMgrSource('task')">🗂 Tasks</button>
+        <button class="mgr-source-chip" id="mgr-src-deadline" onclick="setMgrSource('deadline')">🗓 Deadlines</button>
+        <button class="mgr-source-chip" id="mgr-src-me" onclick="setMgrSource('me')">📋 Month End</button>
+        <button class="mgr-source-chip" id="mgr-src-ye" onclick="setMgrSource('ye')">📆 Year End</button>
+      </div>
+    </div>
+    <div id="mgr-list"></div>
+  </div>
+</div>
+
 <div class="tab-pane" id="tab-notifications">
   <div class="notif-panel">
     <div class="notif-title">🔔 Deadline Notifications</div>
@@ -5212,6 +5280,212 @@ function clearSnooze(id) {
 // ════════════════════════════════════════
 // TAB SWITCHING
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+// 🤝 SYNC WITH MANAGER — aggregated view across all sources
+// ════════════════════════════════════════
+let mgrFilter = 'active';   // 'active' | 'clarified' | 'all'
+let mgrSource = 'all';      // 'all' | 'task' | 'deadline' | 'me' | 'ye'
+let mgrSaveTimers = {};
+
+// Collect every item flagged with discussWithMgr across all sources
+function getAllMgrItems() {
+  const items = [];
+  (tasks || []).forEach(t => {
+    if (t.discussWithMgr) items.push({
+      sourceType: 'task', sourceIcon: '🗂', sourceLabel: 'Task',
+      id: t.id, title: t.title || 'Untitled task',
+      date: t.deadline || t.date || '',
+      ref: t
+    });
+  });
+  (deadlines || []).forEach(d => {
+    if (d.discussWithMgr) items.push({
+      sourceType: 'deadline', sourceIcon: '🗓', sourceLabel: 'Deadline',
+      id: d.id, title: d.title || 'Untitled deadline',
+      date: d.date || '',
+      ref: d
+    });
+  });
+  [['me', meChecklist || [], 'Month End'], ['ye', yeChecklist || [], 'Year End']].forEach(([key, list, label]) => {
+    list.forEach(sec => {
+      (sec.items || []).forEach(it => {
+        if (it.discussWithMgr) items.push({
+          sourceType: key, sourceIcon: key === 'me' ? '📋' : '📆', sourceLabel: label,
+          id: it.id, secId: sec.id, sectionTitle: sec.title, sectionIcon: sec.icon || '📋',
+          title: it.text || 'Untitled item',
+          date: it.remarksDate || '',
+          ref: it
+        });
+      });
+    });
+  });
+  return items;
+}
+
+function setMgrFilter(f) {
+  mgrFilter = f;
+  document.querySelectorAll('.mgr-filter-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.getElementById('mgr-chip-' + f);
+  if (chip) chip.classList.add('active');
+  renderMgrList();
+}
+
+function setMgrSource(s) {
+  mgrSource = s;
+  document.querySelectorAll('.mgr-source-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.getElementById('mgr-src-' + s);
+  if (chip) chip.classList.add('active');
+  renderMgrList();
+}
+
+function renderMgrSync() {
+  renderMgrList();
+}
+
+function renderMgrList() {
+  const wrap = document.getElementById('mgr-list');
+  if (!wrap) return;
+  const all = getAllMgrItems();
+  // Update chip counts
+  const activeCount = all.filter(i => !i.ref.mgrClarified).length;
+  const clarifiedCount = all.filter(i => i.ref.mgrClarified).length;
+  document.getElementById('mgr-cnt-active').textContent = activeCount;
+  document.getElementById('mgr-cnt-clarified').textContent = clarifiedCount;
+  document.getElementById('mgr-cnt-all').textContent = all.length;
+
+  // Apply filters
+  let shown = all;
+  if (mgrFilter === 'active') shown = shown.filter(i => !i.ref.mgrClarified);
+  else if (mgrFilter === 'clarified') shown = shown.filter(i => i.ref.mgrClarified);
+  if (mgrSource !== 'all') shown = shown.filter(i => i.sourceType === mgrSource);
+
+  if (!shown.length) {
+    wrap.innerHTML = `<div class="mgr-empty">
+      <div class="mgr-empty-icon">🤝</div>
+      <div><strong>${mgrFilter === 'clarified' ? 'No clarified items yet.' : mgrFilter === 'active' ? 'No active items to discuss with your manager.' : 'Nothing here yet.'}</strong></div>
+      <div class="mgr-empty-hint">Toggle 👔 <em>discuss with manager</em> on any task, deadline, or checklist item and it will show up here.</div>
+    </div>`;
+    return;
+  }
+
+  // Sort: active first (by date), clarified at bottom; within group, newest items first
+  shown.sort((a, b) => {
+    const ca = a.ref.mgrClarified ? 1 : 0;
+    const cb = b.ref.mgrClarified ? 1 : 0;
+    if (ca !== cb) return ca - cb;
+    // For active, sort by date ascending (earliest first); for clarified, by clarified date descending
+    if (ca === 0) {
+      return (a.date || '').localeCompare(b.date || '');
+    }
+    return (b.ref.mgrClarifiedDate || '').localeCompare(a.ref.mgrClarifiedDate || '');
+  });
+
+  wrap.innerHTML = shown.map(item => {
+    const r = item.ref;
+    const itemKey = item.sourceType + ':' + (item.secId ? item.secId + ':' : '') + item.id;
+    const clarified = !!r.mgrClarified;
+    const sectionInfo = item.sectionTitle ? `<span class="mgr-section-tag">${esc(item.sectionIcon)} ${esc(item.sectionTitle)}</span>` : '';
+    const dateInfo = item.date ? `<span class="mgr-item-date">📅 ${formatDeadline(item.date)}</span>` : '';
+    const clarifiedDate = clarified && r.mgrClarifiedDate ? `<span class="mgr-clarified-date">✓ Clarified ${formatDeadline(r.mgrClarifiedDate)}</span>` : '';
+    return `
+      <div class="mgr-item ${clarified?'clarified':''}" id="mgr-item-${itemKey.replace(/:/g,'_')}">
+        <div class="mgr-item-head">
+          <span class="mgr-src-badge ${item.sourceType}">${item.sourceIcon} ${item.sourceLabel}</span>
+          <span class="mgr-item-title" onclick="openMgrSourceItem('${item.sourceType}','${item.secId||''}','${item.id}')" title="Click to open">${esc(item.title)}</span>
+          ${sectionInfo}
+          ${dateInfo}
+        </div>
+        <div class="mgr-item-grid">
+          <div>
+            <label class="mgr-field-label">📝 My clarification / question</label>
+            <textarea class="mgr-textarea" placeholder="What do I need to ask the manager?" oninput="mgrSaveField('${itemKey}','mgrNotes',this.value)">${esc(r.mgrNotes||'')}</textarea>
+          </div>
+          <div>
+            <label class="mgr-field-label response-label">💬 Manager's reply / recommendation</label>
+            <textarea class="mgr-textarea response" placeholder="Capture the manager's response here…" oninput="mgrSaveField('${itemKey}','mgrResponse',this.value)">${esc(r.mgrResponse||'')}</textarea>
+          </div>
+        </div>
+        <div class="mgr-item-foot">
+          <div class="mgr-clarified-cb">
+            <input type="checkbox" id="mgr-cl-${itemKey.replace(/:/g,'_')}" ${clarified?'checked':''} onchange="mgrToggleClarified('${itemKey}', this.checked)">
+            <label for="mgr-cl-${itemKey.replace(/:/g,'_')}">Mark as Clarified</label>
+          </div>
+          ${clarifiedDate}
+          <span class="mgr-saving-ind" id="mgr-ind-${itemKey.replace(/:/g,'_')}"></span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Find the underlying object given the key
+function getMgrItemRef(key) {
+  const [type, ...rest] = key.split(':');
+  if (type === 'task') {
+    return tasks.find(t => t.id === rest[0]);
+  } else if (type === 'deadline') {
+    return deadlines.find(d => d.id === rest[0]);
+  } else if (type === 'me' || type === 'ye') {
+    const secId = rest[0], itemId = rest[1];
+    const list = type === 'me' ? meChecklist : yeChecklist;
+    const sec = (list || []).find(s => s.id === secId);
+    if (!sec) return null;
+    return (sec.items || []).find(i => i.id === itemId);
+  }
+  return null;
+}
+
+function mgrSaveField(key, field, value) {
+  const ref = getMgrItemRef(key);
+  if (!ref) return;
+  ref[field] = value;
+  // Show saving indicator
+  const ind = document.getElementById('mgr-ind-' + key.replace(/:/g,'_'));
+  if (ind) { ind.textContent = '⏳ Saving…'; ind.className = 'mgr-saving-ind saving'; }
+  const timerKey = key + ':' + field;
+  clearTimeout(mgrSaveTimers[timerKey]);
+  mgrSaveTimers[timerKey] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    if (ind) { ind.textContent = '✓ Saved'; ind.className = 'mgr-saving-ind saved'; }
+    setTimeout(() => { if (ind && ind.textContent === '✓ Saved') { ind.textContent = ''; ind.className = 'mgr-saving-ind'; } }, 2000);
+    delete mgrSaveTimers[timerKey];
+  }, 700);
+}
+
+function mgrToggleClarified(key, checked) {
+  const ref = getMgrItemRef(key);
+  if (!ref) return;
+  ref.mgrClarified = !!checked;
+  if (checked) ref.mgrClarifiedDate = todayISO();
+  else delete ref.mgrClarifiedDate;
+  saveLocal(); pushToCloud();
+  // Re-render to apply the filter (clarified items move out of Active list)
+  renderMgrList();
+}
+
+// Open the source item — uses appropriate panel or modal
+function openMgrSourceItem(sourceType, secId, itemId) {
+  if (sourceType === 'task') {
+    // Switch to Board tab and open edit modal
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if (b.textContent.includes('Board')) b.click();
+    });
+    setTimeout(() => { if (typeof openEditTask === 'function') openEditTask(itemId); }, 200);
+  } else if (sourceType === 'deadline') {
+    // Switch to Deadlines tab and open side panel
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if (b.textContent.includes('Deadlines')) b.click();
+    });
+    setTimeout(() => openDlPanel(itemId), 250);
+  } else if (sourceType === 'me' || sourceType === 'ye') {
+    // Switch to ME/YE tab and open checklist panel
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if ((sourceType === 'me' && b.textContent.includes('Month End')) ||
+          (sourceType === 'ye' && b.textContent.includes('Year End'))) b.click();
+    });
+    setTimeout(() => openClPanel(sourceType, secId, itemId), 250);
+  }
+}
+
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -5225,6 +5499,7 @@ function switchTab(name, btn) {
   else if (name === 'contacts') renderContacts();
   else if (name === 'monthend') renderChecklist('me');
   else if (name === 'yearend') renderChecklist('ye');
+  else if (name === 'manager') renderMgrSync();
   else if (name === 'notifications') { loadNotifSettings(); renderSnoozedList(); renderAuditTrail(); }
 }
 
