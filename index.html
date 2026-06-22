@@ -583,7 +583,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ref-search { background: var(--surface); border:1px solid var(--border); border-radius:7px; padding:7px 12px 7px 32px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); width:360px; max-width:50vw; outline:none; transition:border-color .15s; }
 .ref-search:focus { border-color:var(--gold); }
 .ref-search-icon { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--muted); pointer-events:none; }
-.ref-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+.ref-grid { column-count: 3; column-gap: 16px; }
+.ref-grid > .ref-card { break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; display: block; width: 100%; }
+@media (max-width: 1100px) { .ref-grid { column-count: 2; } }
+@media (max-width: 700px) { .ref-grid { column-count: 1; } }
 .ref-card { background: var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow: var(--shadow); overflow:hidden; transition:box-shadow .15s; }
 .ref-card:hover { box-shadow: var(--shadow2); }
 .ref-card-head { padding:14px 16px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
@@ -601,16 +604,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ref-card-pinned .ref-card-head { background: linear-gradient(135deg, #fffbf0 0%, var(--surface) 100%); }
 
 /* ═══ NEW: compact preview cards (click to open in panel) ═══ */
-.ref-card.preview-mode { cursor: pointer; padding: 0; overflow: hidden; transition: all 0.15s; display: flex; flex-direction: column; }
+.ref-card.preview-mode { cursor: pointer; padding: 0; overflow: hidden; transition: all 0.15s; }
 .ref-card.preview-mode:hover { box-shadow: 0 6px 22px rgba(0,0,0,0.10); transform: translateY(-2px); border-color: var(--gold); }
-.ref-card-preview-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--bg2); flex-shrink: 0; }
+.ref-card-preview-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--bg2); }
 .ref-card-preview-icon { font-size: 20px; flex-shrink: 0; }
 .ref-card-preview-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ref-card-preview-pin { color: var(--gold); font-size: 13px; }
-.ref-card-preview-body { padding: 12px 14px; max-height: 200px; overflow: hidden; position: relative; font-size: 12.5px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; word-break: break-word; flex: 1; }
+.ref-card-preview-body { padding: 12px 14px; max-height: 240px; overflow: hidden; position: relative; font-size: 12.5px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 .ref-card-preview-body.has-overflow::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 36px; background: linear-gradient(transparent, var(--surface) 80%); pointer-events: none; }
 .ref-card-preview-empty { font-style: italic; color: var(--muted); }
-.ref-card-preview-meta { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--bg2); background: var(--bg); font-size: 10px; color: var(--muted); flex-shrink: 0; margin-top: auto; }
+.ref-card-preview-meta { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--bg2); background: var(--bg); font-size: 10px; color: var(--muted); }
 .ref-card-preview-meta .ref-len { margin-left: auto; }
 
 /* Rich text toolbar inside side panel */
@@ -803,7 +806,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   .drop-zone, .tag-manager, .mgr-toggle-bar { margin: 8px 12px; padding: 10px 12px; }
   .toolbar { padding: 0 12px 10px; }
   .board { grid-template-columns: 1fr; padding: 0 12px 20px; }
-  .dl-grid, .ref-grid { grid-template-columns: 1fr; }
+  .dl-grid { grid-template-columns: 1fr; }
   .dl-scroll-body, .cl-scroll-body, .ref-scroll-body, .contacts-scroll-body, .ll-scroll-body { padding: 10px 12px 24px; }
   .calendar-wrap { padding: 12px; }
   .cal-day { min-height: 60px; padding: 4px 3px; }
@@ -4051,7 +4054,7 @@ function renderReference() {
   }
   shown.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
   if (!shown.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted);font-size:13px;">
+    grid.innerHTML = `<div style="column-span:all;-webkit-column-span:all;text-align:center;padding:48px 20px;color:var(--muted);font-size:13px;">
       <div style="font-size:32px;margin-bottom:12px">📚</div>
       ${q ? 'No results found.' : 'No cards yet. Click <strong>+ Add Card</strong> to create your first reference card.'}</div>`;
     return;
