@@ -3905,7 +3905,7 @@ function renderRefPanel() {
         <div class="ref-tb-sep"></div>
         <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('insertUnorderedList')" title="Bullet list">•</button>
         <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('insertOrderedList')" title="Numbered list">1.</button>
-        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refBlock('blockquote')" title="Block quote (indented italic)">❝</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refBlock('blockquote')" title="Block quote — click again on a quoted line to remove">❝</button>
         <div class="ref-tb-sep"></div>
         <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('removeFormat')" title="Clear formatting on selected text">✕</button>
       </div>
@@ -3963,7 +3963,25 @@ function refBlock(tag) {
   if (!ed) return;
   ed.focus();
   restoreRefSelection();
-  document.execCommand('formatBlock', false, '<' + tag + '>');
+  // Detect if the cursor is already inside this block type — if so, toggle it off
+  let isInside = false;
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    let node = sel.getRangeAt(0).startContainer;
+    while (node && node !== ed) {
+      if (node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === tag) {
+        isInside = true;
+        break;
+      }
+      node = node.parentNode;
+    }
+  }
+  if (isInside) {
+    // Currently in a <blockquote> → convert back to a plain paragraph
+    document.execCommand('formatBlock', false, '<p>');
+  } else {
+    document.execCommand('formatBlock', false, '<' + tag + '>');
+  }
   saveRefSelection();
   refPanelSaveContent(ed.innerHTML);
 }
