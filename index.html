@@ -580,7 +580,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .btn-add-ref { background: var(--text); color:#fff; border:none; padding:8px 18px; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; transition:opacity .15s; box-shadow:0 2px 6px rgba(0,0,0,0.15); margin-left:auto; }
 .btn-add-ref:hover { opacity:.85; }
 .ref-search-wrap { position:relative; }
-.ref-search { background: var(--surface); border:1px solid var(--border); border-radius:7px; padding:6px 10px 6px 30px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text); width:200px; outline:none; transition:border-color .15s; }
+.ref-search { background: var(--surface); border:1px solid var(--border); border-radius:7px; padding:7px 12px 7px 32px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); width:360px; max-width:50vw; outline:none; transition:border-color .15s; }
 .ref-search:focus { border-color:var(--gold); }
 .ref-search-icon { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--muted); pointer-events:none; }
 .ref-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
@@ -601,16 +601,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ref-card-pinned .ref-card-head { background: linear-gradient(135deg, #fffbf0 0%, var(--surface) 100%); }
 
 /* ═══ NEW: compact preview cards (click to open in panel) ═══ */
-.ref-card.preview-mode { cursor: pointer; padding: 0; overflow: hidden; transition: all 0.15s; }
+.ref-card.preview-mode { cursor: pointer; padding: 0; overflow: hidden; transition: all 0.15s; display: flex; flex-direction: column; }
 .ref-card.preview-mode:hover { box-shadow: 0 6px 22px rgba(0,0,0,0.10); transform: translateY(-2px); border-color: var(--gold); }
-.ref-card-preview-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--bg2); }
+.ref-card-preview-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--bg2); flex-shrink: 0; }
 .ref-card-preview-icon { font-size: 20px; flex-shrink: 0; }
 .ref-card-preview-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ref-card-preview-pin { color: var(--gold); font-size: 13px; }
-.ref-card-preview-body { padding: 12px 14px; max-height: 140px; overflow: hidden; position: relative; font-size: 12.5px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.ref-card-preview-body { padding: 12px 14px; max-height: 200px; overflow: hidden; position: relative; font-size: 12.5px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; word-break: break-word; flex: 1; }
 .ref-card-preview-body.has-overflow::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 36px; background: linear-gradient(transparent, var(--surface) 80%); pointer-events: none; }
 .ref-card-preview-empty { font-style: italic; color: var(--muted); }
-.ref-card-preview-meta { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--bg2); background: var(--bg); font-size: 10px; color: var(--muted); }
+.ref-card-preview-meta { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--bg2); background: var(--bg); font-size: 10px; color: var(--muted); flex-shrink: 0; margin-top: auto; }
 .ref-card-preview-meta .ref-len { margin-left: auto; }
 
 /* Rich text toolbar inside side panel */
@@ -1094,7 +1094,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="ref-heading">📚 Reference Library</div>
         <div class="ref-search-wrap">
           <span class="ref-search-icon">🔍</span>
-          <input class="ref-search" id="ref-search" placeholder="Search…" oninput="renderReference()">
+          <input class="ref-search" id="ref-search" placeholder="Search by title or content…" oninput="renderReference()">
         </div>
         <button class="btn-add-ref" onclick="addRefCardQuick()">+ Add Card</button>
       </div>
@@ -3964,21 +3964,25 @@ function refBlock(tag) {
   ed.focus();
   restoreRefSelection();
   // Detect if the cursor is already inside this block type — if so, toggle it off
-  let isInside = false;
+  let blockEl = null;
   const sel = window.getSelection();
   if (sel && sel.rangeCount > 0) {
     let node = sel.getRangeAt(0).startContainer;
     while (node && node !== ed) {
       if (node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === tag) {
-        isInside = true;
+        blockEl = node;
         break;
       }
       node = node.parentNode;
     }
   }
-  if (isInside) {
-    // Currently in a <blockquote> → convert back to a plain paragraph
-    document.execCommand('formatBlock', false, '<p>');
+  if (blockEl) {
+    // Properly UNWRAP: move all children out and remove the block
+    const parent = blockEl.parentNode;
+    while (blockEl.firstChild) {
+      parent.insertBefore(blockEl.firstChild, blockEl);
+    }
+    parent.removeChild(blockEl);
   } else {
     document.execCommand('formatBlock', false, '<' + tag + '>');
   }
