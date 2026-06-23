@@ -818,6 +818,74 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ll-print-btn { background:var(--blue); color:#fff; border:none; padding:8px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
 .ll-print-btn:hover { opacity:.85; }
 .ll-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); padding:14px 18px; margin-bottom:12px; }
+
+/* ═══ NEW Lessons Learned layout ═══ */
+.ll-stats-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; background: linear-gradient(135deg, #fffbf0 0%, var(--surface) 100%); border: 1px solid #e8d8a8; border-radius: 10px; padding: 14px 18px; margin: 12px 0 14px; box-shadow: var(--shadow); }
+.ll-stat { display: flex; flex-direction: column; align-items: flex-start; }
+.ll-stat-num { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; line-height: 1.1; }
+.ll-stat-num.muted { color: var(--muted); }
+.ll-stat-num.gold { color: var(--gold); }
+.ll-stat-num.green { color: var(--green); }
+.ll-stat-num.red { color: var(--red); }
+.ll-stat-num.orange { color: var(--orange); }
+.ll-stat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.ll-stat-detail { font-size: 11px; color: var(--text2); margin-top: 2px; font-style: italic; }
+
+.ll-filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; padding: 4px 0; }
+.ll-filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+.ll-filter-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px 11px; font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 500; color: var(--text2); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+.ll-filter-chip:hover { background: var(--bg2); }
+.ll-filter-chip.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+.ll-filter-chip.active.issues { background: var(--red); border-color: var(--red); }
+.ll-filter-chip.active.early { background: var(--blue); border-color: var(--blue); }
+.ll-filter-chip.active.ontime { background: var(--green); border-color: var(--green); }
+.ll-filter-chip.active.late { background: var(--orange); border-color: var(--orange); }
+.ll-filter-chip-count { font-size: 9px; opacity: 0.7; }
+
+.ll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
+@media (max-width: 768px) { .ll-grid { grid-template-columns: 1fr; } }
+
+.ll-card-new { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0; box-shadow: var(--shadow); cursor: pointer; transition: all 0.15s; border-left: 3px solid var(--gold); display: flex; flex-direction: column; overflow: hidden; }
+.ll-card-new:hover { box-shadow: var(--shadow2); transform: translateY(-1px); }
+.ll-card-new.has-issues { border-left-color: var(--red); }
+.ll-card-new.early { border-left-color: var(--blue); }
+.ll-card-new.ontime { border-left-color: var(--green); }
+.ll-card-new.late { border-left-color: var(--orange); }
+.ll-card-new.no-notes { opacity: 0.6; }
+
+.ll-card-new-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px 6px; flex-wrap: wrap; }
+.ll-card-new-title { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; min-width: 160px; line-height: 1.3; }
+.ll-card-new-badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.ll-status-badge { font-size: 9px; padding: 2px 7px; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.ll-status-badge.early { background: var(--blue-bg); color: var(--blue); }
+.ll-status-badge.ontime { background: var(--green-bg); color: var(--green); }
+.ll-status-badge.late { background: #fff3e0; color: var(--orange); }
+.ll-issues-badge { background: var(--red-bg); color: var(--red); font-size: 9px; padding: 2px 7px; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.ll-card-new-meta { display: flex; gap: 10px; align-items: center; padding: 0 14px 8px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+.ll-card-new-meta .ll-tag-chip { font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+.ll-card-new-body { padding: 8px 14px 10px; font-size: 12.5px; color: var(--text2); line-height: 1.55; white-space: pre-wrap; word-break: break-word; max-height: 110px; overflow: hidden; position: relative; flex: 1; }
+.ll-card-new-body.empty { font-style: italic; color: var(--muted); }
+.ll-card-new-body.has-overflow::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(transparent, var(--surface) 80%); pointer-events: none; }
+
+.ll-card-new-issues { background: var(--red-bg); border-top: 1px solid #f5c6c0; padding: 7px 14px; font-size: 11px; color: var(--text2); line-height: 1.5; }
+.ll-card-new-issues strong { color: var(--red); font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.ll-group-header { display: flex; align-items: center; gap: 10px; margin: 18px 0 8px; padding: 0 4px; }
+.ll-group-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text); }
+.ll-group-count { background: var(--bg2); color: var(--muted); font-size: 11px; padding: 2px 9px; border-radius: 10px; font-weight: 600; }
+.ll-group-header:first-child { margin-top: 0; }
+
+.ll-toggles-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 12px; color: var(--text2); }
+.ll-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; transition: all 0.15s; }
+.ll-toggle:hover { background: var(--bg2); }
+.ll-toggle.active { background: var(--gold); color: white; border-color: var(--gold); }
+.ll-toggle input { display: none; }
+
+/* Lesson side panel — reuses dl-side-panel CSS classes */
+.ll-panel-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ll-panel-readonly { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--text2); font-weight: 500; }
 .ll-card-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
 .ll-card-title { font-size:14px; font-weight:700; color:var(--text); flex:1; }
 .ll-card-date { font-size:11px; color:var(--muted); background:var(--bg2); padding:3px 10px; border-radius:12px; }
@@ -1131,6 +1199,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
     <div class="ll-scroll-body">
+      <div id="ll-stats-banner"></div>
+      <div class="ll-filter-bar" id="ll-filter-bar"></div>
+      <div class="ll-toggles-row">
+        <label class="ll-toggle" id="ll-toggle-issues" onclick="toggleLlIssuesOnly()">⚠ Show only with issues</label>
+        <label class="ll-toggle" id="ll-toggle-group" onclick="toggleLlGrouping()">📅 Group by month</label>
+      </div>
       <div id="ll-list"></div>
     </div>
   </div>
@@ -1569,6 +1643,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <button class="dl-panel-close" onclick="closeRefPanel()" title="Close (Esc)">×</button>
   </div>
   <div class="dl-panel-body" id="ref-panel-body"></div>
+</div>
+
+<!-- LESSON SIDE PANEL (rich-text editor for notes/issues) -->
+<div class="dl-side-panel" id="ll-side-panel">
+  <div class="dl-panel-head">
+    <span class="dl-panel-title" id="ll-panel-title">Lesson</span>
+    <span class="dl-panel-save-ind" id="ll-panel-save-ind"></span>
+    <button class="dl-panel-close" onclick="closeLessonPanel()" title="Close (Esc)">×</button>
+  </div>
+  <div class="dl-panel-body" id="ll-panel-body"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -3627,6 +3711,7 @@ document.addEventListener('keydown', function(e) {
     if (dlPanelId) closeDlPanel();
     else if (clPanelItemId) closeClPanel();
     else if (refPanelId) closeRefPanel();
+    else if (llPanelId) closeLessonPanel();
   }
 });
 
@@ -3680,46 +3765,447 @@ function toggleDlCardOnly(id) {
 // ════════════════════════════════════════
 // LESSONS LEARNED
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+// 📖 LESSONS LEARNED — enhanced view
+// ════════════════════════════════════════
+let llTagFilter = 'all';     // 'all' | <tag value>
+let llStatusFilter = 'all';  // 'all' | 'early' | 'ontime' | 'late'
+let llIssuesOnly = false;
+let llGroupByMonth = false;
+
+function getLessonStatus(l) {
+  if (!l.submittedDate || !l.dueDate) return 'ontime';
+  const s = new Date(l.submittedDate);
+  const d = new Date(l.dueDate);
+  if (s.toDateString() === d.toDateString()) return 'ontime';
+  return s < d ? 'early' : 'late';
+}
+
+function computeLessonStats() {
+  const total = lessons.length;
+  let withIssues = 0, early = 0, ontime = 0, late = 0;
+  const tagCounts = {};
+  const issueByTag = {};
+  lessons.forEach(l => {
+    if (l.issues && l.issues.trim()) withIssues++;
+    const st = getLessonStatus(l);
+    if (st === 'early') early++;
+    else if (st === 'late') late++;
+    else ontime++;
+    const tag = l.tag || 'general';
+    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    if (l.issues && l.issues.trim()) issueByTag[tag] = (issueByTag[tag] || 0) + 1;
+  });
+  const mostCommonTag = Object.keys(tagCounts).sort((a,b) => tagCounts[b]-tagCounts[a])[0];
+  const mostIssueTag = Object.keys(issueByTag).sort((a,b) => issueByTag[b]-issueByTag[a])[0];
+  return { total, withIssues, early, ontime, late, mostCommonTag, mostCommonCount: tagCounts[mostCommonTag], mostIssueTag, mostIssueCount: issueByTag[mostIssueTag], tagCounts, issueByTag };
+}
+
+function renderLessonStats() {
+  const banner = document.getElementById('ll-stats-banner');
+  if (!banner) return;
+  const s = computeLessonStats();
+  if (s.total === 0) { banner.style.display = 'none'; return; }
+  banner.style.display = '';
+  banner.innerHTML = `
+    <div class="ll-stat"><div class="ll-stat-num">${s.total}</div><div class="ll-stat-label">Total</div></div>
+    <div class="ll-stat"><div class="ll-stat-num red">${s.withIssues}</div><div class="ll-stat-label">With issues</div></div>
+    <div class="ll-stat"><div class="ll-stat-num green">${s.ontime}</div><div class="ll-stat-label">On time</div></div>
+    <div class="ll-stat"><div class="ll-stat-num blue" style="color:var(--blue)">${s.early}</div><div class="ll-stat-label">Early</div></div>
+    <div class="ll-stat"><div class="ll-stat-num orange">${s.late}</div><div class="ll-stat-label">Late</div></div>
+    ${s.mostCommonTag ? `<div class="ll-stat" style="grid-column:span 2"><div class="ll-stat-detail">Most common: <strong style="color:var(--text)">${esc(s.mostCommonTag.toUpperCase())}</strong> (${s.mostCommonCount}) ${s.mostIssueTag ? ` · Most issues: <strong style="color:var(--red)">${esc(s.mostIssueTag.toUpperCase())}</strong> (${s.mostIssueCount})` : ''}</div></div>` : ''}
+  `;
+}
+
+function renderLessonFilters() {
+  const bar = document.getElementById('ll-filter-bar');
+  if (!bar) return;
+  const tagCounts = {};
+  lessons.forEach(l => { const t = l.tag || 'general'; tagCounts[t] = (tagCounts[t] || 0) + 1; });
+  const tags = Object.keys(tagCounts).sort();
+  let html = '<span class="ll-filter-label">Tag:</span>';
+  html += `<button class="ll-filter-chip ${llTagFilter==='all'?'active':''}" onclick="setLlTagFilter('all')">All <span class="ll-filter-chip-count">${lessons.length}</span></button>`;
+  tags.forEach(t => {
+    html += `<button class="ll-filter-chip ${llTagFilter===t?'active':''}" onclick="setLlTagFilter('${esc(t)}')">${esc(t.toUpperCase())} <span class="ll-filter-chip-count">${tagCounts[t]}</span></button>`;
+  });
+  html += '<span class="ll-filter-label" style="margin-left:10px">Status:</span>';
+  html += `<button class="ll-filter-chip ${llStatusFilter==='all'?'active':''}" onclick="setLlStatusFilter('all')">All</button>`;
+  html += `<button class="ll-filter-chip early ${llStatusFilter==='early'?'active':''}" onclick="setLlStatusFilter('early')">✓ Early</button>`;
+  html += `<button class="ll-filter-chip ontime ${llStatusFilter==='ontime'?'active':''}" onclick="setLlStatusFilter('ontime')">✓ On time</button>`;
+  html += `<button class="ll-filter-chip late ${llStatusFilter==='late'?'active':''}" onclick="setLlStatusFilter('late')">⚠ Late</button>`;
+  bar.innerHTML = html;
+}
+
+function setLlTagFilter(t) { llTagFilter = t; renderLessons(); }
+function setLlStatusFilter(s) { llStatusFilter = s; renderLessons(); }
+function toggleLlIssuesOnly() {
+  llIssuesOnly = !llIssuesOnly;
+  document.getElementById('ll-toggle-issues').classList.toggle('active', llIssuesOnly);
+  renderLessons();
+}
+function toggleLlGrouping() {
+  llGroupByMonth = !llGroupByMonth;
+  document.getElementById('ll-toggle-group').classList.toggle('active', llGroupByMonth);
+  renderLessons();
+}
+
 function renderLessons() {
   const list = document.getElementById('ll-list');
   if (!list) return;
+  // Backfill missing ids on legacy lessons (created before lessons had ids)
+  let migrated = false;
+  lessons.forEach(l => { if (!l.id) { l.id = uid(); migrated = true; } });
+  if (migrated) { saveLocal(); pushToCloud(); }
+  renderLessonStats();
+  renderLessonFilters();
+  // Sync toggle visual state
+  const tIs = document.getElementById('ll-toggle-issues');
+  const tGr = document.getElementById('ll-toggle-group');
+  if (tIs) tIs.classList.toggle('active', llIssuesOnly);
+  if (tGr) tGr.classList.toggle('active', llGroupByMonth);
+
   const q = (document.getElementById('ll-search')?.value || '').toLowerCase();
   let shown = lessons;
-  if (q) {
-    shown = lessons.filter(l =>
-      (l.title||'').toLowerCase().includes(q) ||
-      (l.notes||'').toLowerCase().includes(q) ||
-      (l.issues||'').toLowerCase().includes(q) ||
-      (l.ref||'').toLowerCase().includes(q) ||
-      (l.tag||'').toLowerCase().includes(q)
-    );
-  }
+  if (q) shown = shown.filter(l =>
+    (l.title||'').toLowerCase().includes(q) ||
+    (l.notes||'').toLowerCase().includes(q) ||
+    (l.issues||'').toLowerCase().includes(q) ||
+    (l.ref||'').toLowerCase().includes(q) ||
+    (l.tag||'').toLowerCase().includes(q)
+  );
+  if (llTagFilter !== 'all') shown = shown.filter(l => (l.tag||'general') === llTagFilter);
+  if (llStatusFilter !== 'all') shown = shown.filter(l => getLessonStatus(l) === llStatusFilter);
+  if (llIssuesOnly) shown = shown.filter(l => l.issues && l.issues.trim());
+
   shown = [...shown].sort((a,b) => (b.submittedDate||'').localeCompare(a.submittedDate||''));
+
   if (!shown.length) {
+    const anyFilter = llTagFilter !== 'all' || llStatusFilter !== 'all' || llIssuesOnly || q;
     list.innerHTML = `<div class="ll-empty"><div style="font-size:36px;margin-bottom:14px">📖</div>
-      ${q ? 'No lessons match your search.' : 'No lessons yet. Lessons are created automatically when you mark deadlines as Submitted.'}</div>`;
+      ${anyFilter ? 'No lessons match these filters.' : 'No lessons yet. Lessons are created automatically when you mark deadlines as Submitted.'}</div>`;
     return;
   }
-  list.innerHTML = shown.map(l => {
-    const tagCls = 'tag-' + (l.tag||'general');
-    const issuesHtml = l.issues ? `<div style="margin-top:8px;padding:8px 10px;background:var(--red-bg);border-radius:6px;border-left:3px solid var(--red);font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap"><strong style="color:var(--red);font-size:11px;text-transform:uppercase;letter-spacing:.5px">⚠ Issues:</strong><br>${esc(l.issues)}</div>` : '';
-    return `
-    <div class="ll-card">
-      <div class="ll-card-head">
-        <div class="ll-card-title">${esc(l.title)}</div>
-        <span class="ll-card-tag ${tagCls}">${l.tag||'general'}</span>
-        <span class="ll-card-date">Submitted ${formatDeadline(l.submittedDate)}</span>
+
+  // Render — optionally grouped by year-month
+  if (llGroupByMonth) {
+    const groups = {};
+    shown.forEach(l => {
+      const d = l.submittedDate || '';
+      const key = d ? d.slice(0,7) : 'unknown';
+      (groups[key] = groups[key] || []).push(l);
+    });
+    const keys = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+    list.innerHTML = keys.map(k => {
+      const monthLabel = k === 'unknown' ? 'No date' : new Date(k + '-01').toLocaleDateString('en-GB', { year: 'numeric', month: 'long' });
+      return `
+        <div class="ll-group-header">
+          <span class="ll-group-title">${esc(monthLabel)}</span>
+          <span class="ll-group-count">${groups[k].length} lesson${groups[k].length>1?'s':''}</span>
+        </div>
+        <div class="ll-grid">${groups[k].map(renderLessonCard).join('')}</div>
+      `;
+    }).join('');
+  } else {
+    list.innerHTML = `<div class="ll-grid">${shown.map(renderLessonCard).join('')}</div>`;
+  }
+}
+
+function renderLessonCard(l) {
+  const tagCls = 'tag-' + (l.tag||'general');
+  const status = getLessonStatus(l);
+  const hasIssues = !!(l.issues && l.issues.trim());
+  const notesText = l.notes && l.notes.trim() ? l.notes : '';
+  const plain = stripHtml(notesText);
+  const isEmpty = plain.length === 0;
+  const statusLabel = status === 'early' ? '✓ Early' : status === 'late' ? '⚠ Late' : '✓ On time';
+  const cardCls = hasIssues ? 'has-issues' : status;
+  return `
+    <div class="ll-card-new ${cardCls} ${isEmpty&&!hasIssues?'no-notes':''}" onclick="openLessonPanel('${l.id}')" title="Click to open">
+      <div class="ll-card-new-head">
+        <span class="ll-card-new-title">${esc(l.title)}</span>
+        <div class="ll-card-new-badges">
+          ${hasIssues ? '<span class="ll-issues-badge">⚠ Issues</span>' : ''}
+          <span class="ll-status-badge ${status}">${statusLabel}</span>
+        </div>
       </div>
-      ${l.ref ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Ref: ${esc(l.ref)}</div>` : ''}
-      <div class="ll-card-body">${esc(l.notes || '(no notes)')}</div>
-      ${issuesHtml}
-      <div class="ll-card-meta">
-        <span>📅 Due was: ${formatDeadline(l.dueDate)}</span>
-        <span>•</span>
-        <span>${l.submittedDate === l.dueDate ? 'On time' : new Date(l.submittedDate) < new Date(l.dueDate) ? '✓ Early' : '⚠ Late'}</span>
+      <div class="ll-card-new-meta">
+        <span class="ll-tag-chip ${tagCls}">${esc((l.tag||'general').toUpperCase())}</span>
+        <span>📅 ${formatDeadline(l.submittedDate)}</span>
+        ${l.ref ? `<span>· ${esc(l.ref)}</span>` : ''}
       </div>
+      <div class="ll-card-new-body ${isEmpty?'empty':''} ${plain.length>200?'has-overflow':''}">${isEmpty ? '(no notes)' : esc(plain.slice(0, 280))}</div>
+      ${hasIssues ? `<div class="ll-card-new-issues"><strong>⚠ Issues:</strong> ${esc(l.issues.slice(0,150))}${l.issues.length>150?'…':''}</div>` : ''}
     </div>`;
-  }).join('');
+}
+
+// ════════════════════════════════════════
+// LESSON SIDE PANEL — full edit with rich text
+// ════════════════════════════════════════
+let llPanelId = null;
+let llPanelSaveTimers = {};
+let llSavedRange = null;
+
+function saveLlSelection() {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const r = sel.getRangeAt(0);
+    const ed = document.getElementById('llp-editor');
+    if (ed && ed.contains(r.commonAncestorContainer)) llSavedRange = r.cloneRange();
+  }
+}
+function restoreLlSelection() {
+  if (!llSavedRange) return false;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(llSavedRange);
+  return true;
+}
+
+function openLessonPanel(id) {
+  const l = lessons.find(x => x.id === id);
+  if (!l) return;
+  const panelEl = document.getElementById('ll-side-panel');
+  if (llPanelId === id && panelEl && panelEl.classList.contains('open')) {
+    closeLessonPanel();
+    return;
+  }
+  if (llPanelId && llPanelId !== id) flushAllLlPanelSaves();
+  llPanelId = id;
+  renderLessonPanel();
+  panelEl.classList.add('open');
+}
+
+function closeLessonPanel() {
+  flushAllLlPanelSaves();
+  llPanelId = null;
+  document.getElementById('ll-side-panel').classList.remove('open');
+  renderLessons();
+}
+
+function flushAllLlPanelSaves() {
+  Object.keys(llPanelSaveTimers).forEach(k => { clearTimeout(llPanelSaveTimers[k]); delete llPanelSaveTimers[k]; });
+  saveLocal(); pushToCloud();
+}
+
+function showLlPanelSaving() {
+  const ind = document.getElementById('ll-panel-save-ind');
+  if (ind) { ind.textContent = '⏳ Saving…'; ind.className = 'dl-panel-save-ind saving'; }
+}
+function showLlPanelSaved() {
+  const ind = document.getElementById('ll-panel-save-ind');
+  if (ind) { ind.textContent = '✓ Saved'; ind.className = 'dl-panel-save-ind saved'; }
+  setTimeout(() => { if (ind && ind.textContent === '✓ Saved') { ind.textContent = ''; ind.className = 'dl-panel-save-ind'; } }, 2200);
+}
+
+function llPanelSaveField(field, value) {
+  const l = lessons.find(x => x.id === llPanelId);
+  if (!l) return;
+  l[field] = value;
+  showLlPanelSaving();
+  clearTimeout(llPanelSaveTimers[field]);
+  llPanelSaveTimers[field] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showLlPanelSaved();
+    delete llPanelSaveTimers[field];
+  }, 700);
+}
+
+function llPanelSaveNotes(html) { llPanelSaveField('notes', html); }
+function llPanelSaveIssues(html) { llPanelSaveField('issues', html); }
+
+function llPanelDelete() {
+  if (!confirm('Delete this lesson? This cannot be undone.')) return;
+  const l = lessons.find(x => x.id === llPanelId);
+  if (l) logAudit('DELETE_LESSON', l.title || 'Lesson', '(via panel)');
+  lessons = lessons.filter(x => x.id !== llPanelId);
+  llPanelId = null;
+  document.getElementById('ll-side-panel').classList.remove('open');
+  saveLocal(); pushToCloud();
+  renderLessons();
+  showToast('Lesson deleted.');
+}
+
+function renderLessonPanel() {
+  const l = lessons.find(x => x.id === llPanelId);
+  if (!l) { closeLessonPanel(); return; }
+  const status = getLessonStatus(l);
+  const statusLabel = status === 'early' ? '✓ Early' : status === 'late' ? '⚠ Late' : '✓ On time';
+  document.getElementById('ll-panel-title').textContent = '📖 ' + (l.title || 'Lesson');
+  const body = document.getElementById('ll-panel-body');
+  body.innerHTML = `
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Title</label>
+      <input class="dl-panel-input" type="text" value="${esc(l.title||'')}" oninput="llPanelSaveField('title', this.value)">
+    </div>
+    <div class="ll-panel-meta-grid">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Submitted</label>
+        <input class="dl-panel-input" type="date" value="${esc(l.submittedDate||'')}" oninput="llPanelSaveField('submittedDate', this.value)">
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Was due</label>
+        <input class="dl-panel-input" type="date" value="${esc(l.dueDate||'')}" oninput="llPanelSaveField('dueDate', this.value)">
+      </div>
+    </div>
+    <div class="ll-panel-meta-grid">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Tag</label>
+        <select class="dl-panel-select" onchange="llPanelSaveField('tag', this.value)">
+          ${['vat','finance','audit','procurement','general'].map(t => `<option value="${t}" ${l.tag===t?'selected':''}>${t.toUpperCase()}</option>`).join('')}
+          ${customTags.map(ct => `<option value="custom:${esc(ct)}" ${l.tag==='custom:'+ct?'selected':''}>${esc(ct.toUpperCase())}</option>`).join('')}
+        </select>
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Status</label>
+        <div class="ll-panel-readonly">${statusLabel}</div>
+      </div>
+    </div>
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Reference / entity</label>
+      <input class="dl-panel-input" type="text" value="${esc(l.ref||'')}" oninput="llPanelSaveField('ref', this.value)">
+    </div>
+    <div class="dl-panel-section">
+      <div class="dl-panel-section-title">📝 Notes / What worked</div>
+      <div class="ref-toolbar">
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','bold')" title="Bold"><b>B</b></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','italic')" title="Italic"><i>I</i></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','underline')" title="Underline"><u>U</u></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','strikeThrough')" title="Strikethrough"><s>S</s></button>
+        <div class="ref-tb-sep"></div>
+        <select class="ref-tb-select" onmousedown="saveLlSelection()" onchange="llFont('notes',this.value);this.value=''" title="Font">
+          <option value="">Font ▾</option>
+          <option value="DM Sans, sans-serif">Sans</option>
+          <option value="Playfair Display, Georgia, serif">Serif</option>
+          <option value="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Mono</option>
+        </select>
+        <select class="ref-tb-select" onmousedown="saveLlSelection()" onchange="llSize('notes',this.value);this.value=''" title="Size">
+          <option value="">Size ▾</option>
+          <option value="2">Small</option>
+          <option value="3">Normal</option>
+          <option value="5">Large</option>
+          <option value="6">Huge</option>
+        </select>
+        <button class="ref-tb-btn" onmousedown="saveLlSelection();event.preventDefault()" onclick="toggleLlColorPicker(event,'notes')" title="Text color">A▾</button>
+        <div class="ref-tb-sep"></div>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','insertUnorderedList')" title="Bullet list">•</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','insertOrderedList')" title="Numbered list">1.</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llBlock('notes','blockquote')" title="Block quote — click again to remove">❝</button>
+        <div class="ref-tb-sep"></div>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','removeFormat')" title="Clear formatting">✕</button>
+      </div>
+      <div class="ref-editor" id="llp-editor" contenteditable="true" data-placeholder="What went well, what you learned…" oninput="llPanelSaveNotes(this.innerHTML)" onmouseup="saveLlSelection()" onkeyup="saveLlSelection()"></div>
+    </div>
+    <div class="dl-panel-section">
+      <div class="dl-panel-section-title" style="color:var(--red)">⚠ Issues encountered</div>
+      <textarea class="dl-panel-textarea" id="llp-issues" placeholder="Any problems, delays, or things to avoid next time…" oninput="llPanelSaveIssues(this.value)" style="min-height:80px">${esc(l.issues||'')}</textarea>
+    </div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bg2);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--muted)">Created from deadline ${l.deadlineId ? `<code>${esc(l.deadlineId).slice(0,8)}…</code>` : '(manual)'}</span>
+      <button class="dl-panel-delete-btn" onclick="llPanelDelete()">🗑 Delete lesson</button>
+    </div>
+  `;
+  // Initialize the editor content (HTML or plain text)
+  const ed = document.getElementById('llp-editor');
+  if (ed) {
+    const content = l.notes || '';
+    if (content && /<[a-z][^>]*>/i.test(content)) ed.innerHTML = content;
+    else ed.innerHTML = esc(content).replace(/\n/g, '<br>');
+  }
+}
+
+// Rich-text handlers for lesson panel (single editor 'llp-editor')
+function llCmd(field, cmd) {
+  const ed = document.getElementById('llp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreLlSelection();
+  document.execCommand(cmd, false, null);
+  saveLlSelection();
+  llPanelSaveNotes(ed.innerHTML);
+}
+function llFont(field, ff) {
+  if (!ff) return;
+  const ed = document.getElementById('llp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreLlSelection();
+  document.execCommand('fontName', false, ff);
+  saveLlSelection();
+  llPanelSaveNotes(ed.innerHTML);
+}
+function llSize(field, size) {
+  if (!size) return;
+  const ed = document.getElementById('llp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreLlSelection();
+  document.execCommand('fontSize', false, size);
+  saveLlSelection();
+  llPanelSaveNotes(ed.innerHTML);
+}
+function llBlock(field, tag) {
+  const ed = document.getElementById('llp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreLlSelection();
+  // Toggle: if already in this block type, unwrap
+  let blockEl = null;
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    let node = sel.getRangeAt(0).startContainer;
+    while (node && node !== ed) {
+      if (node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === tag) { blockEl = node; break; }
+      node = node.parentNode;
+    }
+  }
+  if (blockEl) {
+    const parent = blockEl.parentNode;
+    while (blockEl.firstChild) parent.insertBefore(blockEl.firstChild, blockEl);
+    parent.removeChild(blockEl);
+  } else {
+    document.execCommand('formatBlock', false, '<' + tag + '>');
+  }
+  saveLlSelection();
+  llPanelSaveNotes(ed.innerHTML);
+}
+function llColor(field, color) {
+  const ed = document.getElementById('llp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreLlSelection();
+  document.execCommand('foreColor', false, color);
+  saveLlSelection();
+  hideLlColorPicker();
+  llPanelSaveNotes(ed.innerHTML);
+}
+function toggleLlColorPicker(e, field) {
+  e.stopPropagation();
+  if (document.getElementById('ll-color-picker')) { hideLlColorPicker(); return; }
+  const picker = document.createElement('div');
+  picker.id = 'll-color-picker';
+  picker.className = 'ref-color-picker';
+  const colors = [
+    ['#1a1714','Default'], ['#5c554c','Gray'], ['#c8311c','Red'], ['#c95f0a','Orange'],
+    ['#b08d3a','Gold'], ['#5e8a3a','Green'], ['#2563a8','Blue'], ['#7a4cb0','Purple']
+  ];
+  picker.innerHTML = colors.map(([c, n]) =>
+    `<div class="ref-color-swatch" style="background:${c}" title="${n}" onclick="llColor('${field}','${c}')"></div>`
+  ).join('');
+  const btn = e.target;
+  const toolbar = btn.closest('.ref-toolbar');
+  toolbar.appendChild(picker);
+  picker.style.top = (btn.offsetTop + btn.offsetHeight + 4) + 'px';
+  picker.style.left = btn.offsetLeft + 'px';
+  setTimeout(() => document.addEventListener('click', closeLlColorPickerOnOutside), 30);
+}
+function closeLlColorPickerOnOutside(e) {
+  if (e.target.closest('#ll-color-picker') || e.target.classList.contains('ref-tb-btn')) return;
+  hideLlColorPicker();
+}
+function hideLlColorPicker() {
+  const p = document.getElementById('ll-color-picker');
+  if (p) p.remove();
+  document.removeEventListener('click', closeLlColorPickerOnOutside);
 }
 function printLessons() {
   document.body.classList.add('print-ll');
