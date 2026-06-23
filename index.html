@@ -355,9 +355,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-mini-card.completed { border-left-color: var(--green); opacity: .75; }
 .cl-mini-card.has-mgr { border-right: 3px solid var(--purple); }
 .cl-mini-text { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
-.cl-mini-section { font-size: 10px; color: var(--muted); font-style: italic; margin-bottom: 6px; }
-.cl-mini-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.cl-mini-assigned, .cl-mini-date { font-size: 10px; color: var(--text2); background: var(--bg); padding: 2px 7px; border-radius: 4px; }
+.cl-mini-bottom-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.cl-mini-section { font-size: 9px; color: var(--muted); font-style: italic; padding: 1px 6px; background: var(--bg2); border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+.cl-mini-assigned, .cl-mini-date { font-size: 10px; color: var(--text2); background: var(--bg); padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.cl-mini-mgr-tag { font-size: 11px; }
 .cl-board-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 20px 8px; font-style: italic; }
 
 /* ═══ Checklist item Side Panel (ME/YE) ═══ */
@@ -752,8 +753,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .field-info { position: relative; display: inline-flex; align-items: center; margin-left: 4px; vertical-align: middle; }
 .field-info-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: var(--bg2); color: var(--muted); font-size: 9px; font-weight: 700; cursor: help; font-family: 'DM Sans', sans-serif; line-height: 1; transition: all 0.15s; }
 .field-info-icon:hover { background: var(--gold); color: white; }
-.field-info-tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--surface); padding: 7px 11px; border-radius: 6px; font-size: 11px; font-weight: 400; line-height: 1.5; white-space: normal; width: max-content; max-width: 240px; box-shadow: 0 4px 14px rgba(0,0,0,0.22); z-index: 250; opacity: 0; pointer-events: none; transition: opacity 0.15s; text-transform: none; letter-spacing: 0; }
-.field-info-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--text); }
+.field-info-tip { position: absolute; bottom: calc(100% + 6px); left: -7px; transform: none; background: var(--text); color: var(--surface); padding: 7px 11px; border-radius: 6px; font-size: 11px; font-weight: 400; line-height: 1.5; white-space: normal; width: max-content; max-width: 240px; box-shadow: 0 4px 14px rgba(0,0,0,0.22); z-index: 250; opacity: 0; pointer-events: none; transition: opacity 0.15s; text-transform: none; letter-spacing: 0; }
+.field-info-tip::after { content: ''; position: absolute; top: 100%; left: 13px; transform: none; border: 5px solid transparent; border-top-color: var(--text); }
 .field-info:hover .field-info-tip { opacity: 1; }
 .cl-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
 .cl-btn { padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s; display:flex; align-items:center; gap:6px; }
@@ -5186,16 +5187,15 @@ function renderClMiniCard(it, type) {
   const dateStr = it.remarksDate ? formatDeadline(it.remarksDate) : '';
   const assigned = it.assigned ? '👤 ' + esc(it.assigned) : '';
   const mgrTag = it.discussWithMgr ? '<span class="cl-mini-mgr-tag" title="Discuss with manager">👔</span>' : '';
-  const hasMeta = assigned || dateStr || it.discussWithMgr;
   return `
     <div class="cl-mini-card ${it.status||'not_started'} ${it.discussWithMgr?'has-mgr':''}" onclick="openClPanel('${type}', '${it._secId}', '${it.id}')" title="Click to open details">
       <div class="cl-mini-text">${esc(it.text)}</div>
-      <div class="cl-mini-section">${esc(it._secIcon||'📋')} ${esc(it._secTitle||'')}</div>
-      ${hasMeta ? `<div class="cl-mini-meta">
+      <div class="cl-mini-bottom-row">
+        <span class="cl-mini-section" title="Section">${esc(it._secIcon||'📋')} ${esc(it._secTitle||'')}</span>
         ${assigned ? `<span class="cl-mini-assigned">${assigned}</span>` : ''}
         ${dateStr ? `<span class="cl-mini-date">📅 ${dateStr}</span>` : ''}
         ${mgrTag}
-      </div>` : ''}
+      </div>
     </div>`;
 }
 
