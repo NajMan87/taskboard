@@ -100,10 +100,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .mgr-toggle-bar .mgr-count { background: rgba(0,0,0,0.1); padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 .mgr-toggle-bar.active .mgr-count { background: rgba(255,255,255,0.25); }
 
-.board { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; padding: 0 20px 28px; }
-@media (max-width: 1280px) { .board { grid-template-columns: repeat(2, 1fr); } }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 0 14px 28px; }
+@media (max-width: 900px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .board { grid-template-columns: 1fr; } }
 .task-assigned-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--purple-bg); color: var(--purple); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
-.column { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; min-height: 220px; }
+.column { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 10px; min-height: 220px; min-width: 0; }
+.task-card { min-width: 0; }
+.task-title { overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
 .col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 13px; padding-bottom: 11px; border-bottom: 1px solid var(--border); }
 .col-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .col-title { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
@@ -141,6 +144,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .task-title { font-size: 13px; line-height: 1.5; flex: 1; word-break: break-word; color: var(--text); font-weight: 500; }
 .card-menu-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 0 1px; opacity: 0; transition: opacity 0.1s; line-height: 1; flex-shrink: 0; }
 .task-card:hover .card-menu-btn { opacity: 1; }
+.card-edit-btn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 3px; opacity: 0; transition: opacity 0.1s; line-height: 1; flex-shrink: 0; }
+.task-card:hover .card-edit-btn { opacity: 0.85; }
+.card-edit-btn:hover { opacity: 1 !important; transform: scale(1.15); }
 .card-menu-btn:hover { color: var(--text); }
 .card-deadline { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 11px; color: var(--muted); }
 .card-deadline.overdue { color: var(--over); font-weight: 600; }
@@ -1000,6 +1006,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </select>
     </div>
     <div class="drop-actions">
+      <div class="drop-type-row" style="display:flex;align-items:center;gap:6px;margin-right:10px">
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">TYPE:</span>
+        <div class="cl-view-seg" style="margin:0">
+          <button id="drop-type-todo" type="button" class="active" onclick="setDropType('todo')">📋 To Do</button>
+          <button id="drop-type-followup" type="button" onclick="setDropType('followup')">👥 Follow-Up</button>
+        </div>
+        <input id="drop-assigned" type="text" placeholder="Assigned to…" style="display:none;background:var(--surface);border:1px solid #d4c0e6;border-radius:6px;padding:5px 9px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;width:140px;background:var(--purple-bg)">
+      </div>
       <button class="btn-parse" id="parse-btn" onclick="aiParse()"><span id="parse-inner">✦ Parse with AI</span></button>
       <button class="btn-single" onclick="addSingle()">+ Single task</button>
     </div>
@@ -2138,14 +2152,38 @@ async function aiParse() {
     showToast(`✦ ${added.length} task${added.length>1?'s':''} added (smart parse)`);
   }
   added.forEach(t => {
-    tasks.unshift({ id:uid(), title:t.title, priority:t.priority||priority, tag:t.tag||tag, deadline:t.deadline||deadline||'', status:'todo', date:todayStr(), discussWithMgr:false, mgrNotes:'' });
-    logAudit('CREATE_TASK', t.title, `tag=${t.tag||tag} priority=${t.priority||priority}`);
+    const dropType = getDropType();
+    const dropAssigned = (dropType === 'followup') ? getDropAssigned() : '';
+    tasks.unshift({ id:uid(), title:t.title, priority:t.priority||priority, tag:t.tag||tag, deadline:t.deadline||deadline||'', status:dropType, assignedTo:dropAssigned, date:todayStr(), discussWithMgr:false, mgrNotes:'' });
+    logAudit('CREATE_TASK', t.title, `tag=${t.tag||tag} priority=${t.priority||priority} status=${dropType}`);
   });
   document.getElementById('drop-input').value = '';
   document.getElementById('drop-deadline').value = '';
+  resetDropType();
   btn.disabled = false;
   inner.textContent = '✦ Parse with AI';
   await saveData();
+}
+
+function setDropType(type) {
+  ['todo','followup'].forEach(t => {
+    const btn = document.getElementById('drop-type-' + t);
+    if (btn) btn.classList.toggle('active', t === type);
+  });
+  const assignedInput = document.getElementById('drop-assigned');
+  if (assignedInput) assignedInput.style.display = type === 'followup' ? '' : 'none';
+}
+function getDropType() {
+  const fu = document.getElementById('drop-type-followup');
+  return (fu && fu.classList.contains('active')) ? 'followup' : 'todo';
+}
+function getDropAssigned() {
+  return (document.getElementById('drop-assigned')?.value || '').trim();
+}
+function resetDropType() {
+  setDropType('todo');
+  const a = document.getElementById('drop-assigned');
+  if (a) a.value = '';
 }
 
 function addSingle() {
@@ -2153,12 +2191,15 @@ function addSingle() {
   if (!input) { showToast('Type something first.'); return; }
   const deadline = document.getElementById('drop-deadline').value;
   const tag = document.getElementById('drop-tag').value;
-  tasks.unshift({ id:uid(), title:input, priority:'medium', tag, deadline:deadline||'', status:'todo', date:todayStr(), discussWithMgr:false, mgrNotes:'' });
-  logAudit('CREATE_TASK', input, `tag=${tag}`);
+  const status = getDropType();
+  const assignedTo = (status === 'followup') ? getDropAssigned() : '';
+  tasks.unshift({ id:uid(), title:input, priority:'medium', tag, deadline:deadline||'', status, assignedTo, date:todayStr(), discussWithMgr:false, mgrNotes:'' });
+  logAudit('CREATE_TASK', input, `tag=${tag} status=${status}${assignedTo?' assigned='+assignedTo:''}`);
   document.getElementById('drop-input').value = '';
   document.getElementById('drop-deadline').value = '';
+  resetDropType();
   saveData();
-  showToast('Task added.');
+  showToast(status === 'followup' ? `Follow-up added${assignedTo?' (with '+assignedTo+')':''}.` : 'Task added.');
 }
 
 function toggleCheck(id) {
@@ -2397,6 +2438,7 @@ function renderCol(elId, list) {
           <div class="check-box ${t.status==='done'?'checked':''}" onclick="toggleCheck('${t.id}')"></div>
           <span class="task-title" onclick="openTaskPanel('${t.id}')" style="cursor:pointer" title="Click to open in panel">${esc(t.title)}</span>
           <div class="task-sel-cb ${selectedTaskIds.has(t.id)?'selected':''}" onclick="toggleTaskSelection('${t.id}', event)" title="Select to merge with other tasks"></div>
+          <button class="card-edit-btn" onclick="openTaskPanel('${t.id}')" title="Edit (quick)">✏️</button>
           <button class="card-menu-btn" onclick="openMenu('${t.id}',event)">⋯</button>
         </div>
         ${dlHtml}
