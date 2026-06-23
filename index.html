@@ -100,9 +100,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .mgr-toggle-bar .mgr-count { background: rgba(0,0,0,0.1); padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 .mgr-toggle-bar.active .mgr-count { background: rgba(255,255,255,0.25); }
 
-.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 0 14px 28px; }
-@media (max-width: 900px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 600px) { .board { grid-template-columns: 1fr; } }
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0 14px 28px; }
+@media (max-width: 900px) { .board { grid-template-columns: 1fr; } }
 .task-assigned-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--purple-bg); color: var(--purple); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
 .column { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 10px; min-height: 220px; min-width: 0; }
 .task-card { min-width: 0; }
@@ -747,6 +746,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-period-arrow.today { font-size: 11px; padding: 4px 9px; border-radius: 12px; font-weight: 600; }
 .cl-period-label { color: var(--gold); font-size: 13px; font-weight: 600; padding: 2px 8px; font-family: 'DM Sans', sans-serif; min-width: 110px; text-align: center; cursor: pointer; user-select: none; }
 .cl-period-label:hover { text-decoration: underline; }
+.cl-period-picker-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; left: -10px; }
 .cl-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
 .cl-btn { padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s; display:flex; align-items:center; gap:6px; }
 .cl-btn:hover { opacity:.85; }
@@ -1045,7 +1045,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <span style="font-size:11px;color:var(--muted);margin-right:2px">FILTER:</span>
   <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
   <button class="filter-btn" onclick="setFilter('todo',this)">To Do</button>
-  <button class="filter-btn" onclick="setFilter('doing',this)">In Progress</button>
   <button class="filter-btn" onclick="setFilter('followup',this)">👥 Follow-Up</button>
   <button class="filter-btn" onclick="setFilter('done',this)">Done</button>
   <button class="filter-btn" onclick="setFilter('overdue',this)" style="color:var(--red)">🔔 Overdue</button>
@@ -1059,10 +1058,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="column">
     <div class="col-head"><div class="col-dot" style="background:#c17f2a"></div><span class="col-title">To Do</span><span class="col-badge" id="c-todo">0</span></div>
     <div id="col-todo"></div>
-  </div>
-  <div class="column">
-    <div class="col-head"><div class="col-dot" style="background:#2563a8"></div><span class="col-title">In Progress</span><span class="col-badge" id="c-doing">0</span></div>
-    <div id="col-doing"></div>
   </div>
   <div class="column">
     <div class="col-head"><div class="col-dot" style="background:#7a4cb0"></div><span class="col-title">👥 Follow-Up</span><span class="col-badge" id="c-followup">0</span></div>
@@ -1366,7 +1361,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="cl-heading">📋 Month End Checklist</div>
         <div class="cl-period-nav">
           <button class="cl-period-arrow" onclick="prevClPeriod('me')" title="Previous month">‹</button>
-          <span class="cl-period-label" id="me-period-badge" onclick="jumpToTodayPeriod('me')" title="Click to jump to current month">Loading…</span>
+          <span class="cl-period-label" id="me-period-badge" onclick="showPeriodPicker('me')" title="Click to pick any month">Loading…</span>
+          <input type="month" class="cl-period-picker-input" id="me-period-picker" onchange="setPeriodFromPicker('me', this.value)">
           <button class="cl-period-arrow" onclick="nextClPeriod('me')" title="Next month">›</button>
         </div>
         <div class="cl-view-seg" style="margin-left:auto">
@@ -1423,7 +1419,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="cl-heading">📆 Year End Checklist</div>
         <div class="cl-period-nav">
           <button class="cl-period-arrow" onclick="prevClPeriod('ye')" title="Previous year">‹</button>
-          <span class="cl-period-label" id="ye-period-badge" onclick="jumpToTodayPeriod('ye')" title="Click to jump to current year">Loading…</span>
+          <span class="cl-period-label" id="ye-period-badge" onclick="showPeriodPicker('ye')" title="Click to pick any year">Loading…</span>
+          <input type="number" class="cl-period-picker-input" id="ye-period-picker" min="2000" max="2099" step="1" onchange="setPeriodFromPicker('ye', this.value)" placeholder="YYYY">
           <button class="cl-period-arrow" onclick="nextClPeriod('ye')" title="Next year">›</button>
         </div>
         <div class="cl-view-seg" style="margin-left:auto">
@@ -1584,7 +1581,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <label class="dl-form-label">Status</label>
         <select id="edit-task-status" class="dl-form-select">
           <option value="todo">📋 To Do</option>
-          <option value="doing">🔵 In Progress</option>
           <option value="followup">👥 Follow-Up</option>
           <option value="done">✅ Done</option>
         </select>
@@ -2255,7 +2251,6 @@ function openMenu(id, e) {
     <div class="ctx-item" onclick="openEditTask('${id}')">✏️ Edit</div>
     <div class="ctx-item mgr" onclick="toggleTaskMgr('${id}')">👔 ${t.discussWithMgr?'Remove':'Mark'} discuss with manager</div>
     <div class="ctx-item" onclick="moveTask('${id}','todo')">📋 Move → To Do</div>
-    <div class="ctx-item" onclick="moveTask('${id}','doing')">🔵 Move → In Progress</div>
     <div class="ctx-item" onclick="moveTask('${id}','followup')">👥 Move → Follow-Up</div>
     <div class="ctx-item" onclick="moveTask('${id}','done')">✅ Move → Done</div>
     <div class="ctx-item danger" onclick="deleteTask('${id}')">🗑 Delete</div>`;
@@ -2470,28 +2465,28 @@ function render() {
   const mgrCount = tasks.filter(t => t.discussWithMgr && t.status !== 'done').length;
   document.getElementById('board-mgr-count').textContent = mgrCount;
 
-  let todo, doing, followup, done;
+  // Auto-migrate any legacy 'doing' status to 'todo' (In Progress column removed)
+  let migrated = false;
+  tasks.forEach(t => { if (t.status === 'doing') { t.status = 'todo'; migrated = true; } });
+  if (migrated) saveLocal();
+
+  let todo, followup, done;
   if (currentFilter === 'overdue') {
     todo = overdueTasks.filter(t=>t.status==='todo');
-    doing = overdueTasks.filter(t=>t.status==='doing');
     followup = overdueTasks.filter(t=>t.status==='followup');
     done = [];
   } else {
     todo = filtered.filter(t=>t.status==='todo');
-    doing = filtered.filter(t=>t.status==='doing');
     followup = filtered.filter(t=>t.status==='followup');
     done = filtered.filter(t=>t.status==='done');
-    if (currentFilter==='todo') { doing=[]; followup=[]; done=[]; }
-    if (currentFilter==='doing') { todo=[]; followup=[]; done=[]; }
-    if (currentFilter==='followup') { todo=[]; doing=[]; done=[]; }
-    if (currentFilter==='done') { todo=[]; doing=[]; followup=[]; }
+    if (currentFilter==='todo') { followup=[]; done=[]; }
+    if (currentFilter==='followup') { todo=[]; done=[]; }
+    if (currentFilter==='done') { todo=[]; followup=[]; }
   }
   renderCol('col-todo', todo);
-  renderCol('col-doing', doing);
   renderCol('col-followup', followup);
   renderCol('col-done', done);
   document.getElementById('c-todo').textContent = tasks.filter(t=>t.status==='todo').length;
-  document.getElementById('c-doing').textContent = tasks.filter(t=>t.status==='doing').length;
   document.getElementById('c-followup').textContent = tasks.filter(t=>t.status==='followup').length;
   document.getElementById('c-done').textContent = tasks.filter(t=>t.status==='done').length;
   document.getElementById('stat-total').textContent = tasks.length;
@@ -4939,6 +4934,34 @@ function jumpToTodayPeriod(type) {
   renderChecklist(type);
 }
 
+// Show native picker so user can jump to any month/year directly
+function showPeriodPicker(type) {
+  const picker = document.getElementById(type + '-period-picker');
+  if (!picker) return;
+  picker.value = getCurrentPeriod(type);
+  // Modern browsers support showPicker(); fall back to focus+click
+  if (typeof picker.showPicker === 'function') {
+    try { picker.showPicker(); return; } catch(e) {}
+  }
+  picker.focus();
+  picker.click();
+}
+
+function setPeriodFromPicker(type, value) {
+  if (!value) return;
+  if (type === 'me') {
+    // Expect YYYY-MM
+    if (!/^\d{4}-\d{2}$/.test(value)) return;
+    setCurrentPeriod('me', value);
+  } else {
+    // Expect YYYY as number
+    const yr = String(parseInt(value));
+    if (yr === 'NaN') return;
+    setCurrentPeriod('ye', yr);
+  }
+  renderChecklist(type);
+}
+
 // Migration: backfill missing 'period' fields on items so they belong to a specific period
 function migrateClPeriods(type) {
   const list = getClList(type);
@@ -6330,7 +6353,6 @@ function renderTaskPanel() {
         <label class="dl-panel-label">Status</label>
         <select class="dl-panel-select" onchange="taskPanelSaveField('status', this.value, true)">
           <option value="todo" ${t.status==='todo'?'selected':''}>📋 To Do</option>
-          <option value="doing" ${t.status==='doing'?'selected':''}>🔵 In Progress</option>
           <option value="followup" ${t.status==='followup'?'selected':''}>👥 Follow-Up</option>
           <option value="done" ${t.status==='done'?'selected':''}>✅ Done</option>
         </select>
