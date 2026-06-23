@@ -735,6 +735,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-topbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
 .cl-heading { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--text); }
 .cl-period-badge { background: var(--gold-bg); border:1px solid #e8c97a; color:var(--gold); font-size:13px; font-weight:600; padding:4px 14px; border-radius:20px; font-family:'DM Sans',sans-serif; }
+.cl-period-nav { display: inline-flex; align-items: center; gap: 4px; background: var(--gold-bg, #fffbf0); border: 1px solid #e8c97a; border-radius: 20px; padding: 2px 4px; }
+.cl-period-arrow { background: transparent; border: none; color: var(--gold); font-size: 14px; cursor: pointer; padding: 2px 8px; border-radius: 50%; line-height: 1; font-weight: 700; transition: background 0.15s; }
+.cl-period-arrow:hover { background: rgba(193,127,42,0.15); }
+.cl-period-arrow.today { font-size: 11px; padding: 4px 9px; border-radius: 12px; font-weight: 600; }
+.cl-period-label { color: var(--gold); font-size: 13px; font-weight: 600; padding: 2px 8px; font-family: 'DM Sans', sans-serif; min-width: 110px; text-align: center; cursor: pointer; user-select: none; }
+.cl-period-label:hover { text-decoration: underline; }
 .cl-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
 .cl-btn { padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s; display:flex; align-items:center; gap:6px; }
 .cl-btn:hover { opacity:.85; }
@@ -1344,7 +1350,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="cl-sticky-head">
       <div class="cl-topbar">
         <div class="cl-heading">📋 Month End Checklist</div>
-        <div class="cl-period-badge" id="me-period-badge">Loading…</div>
+        <div class="cl-period-nav">
+          <button class="cl-period-arrow" onclick="prevClPeriod('me')" title="Previous month">‹</button>
+          <span class="cl-period-label" id="me-period-badge" onclick="jumpToTodayPeriod('me')" title="Click to jump to current month">Loading…</span>
+          <button class="cl-period-arrow" onclick="nextClPeriod('me')" title="Next month">›</button>
+        </div>
         <div class="cl-view-seg" style="margin-left:auto">
           <button id="me-view-card" onclick="setClView('me','card')" title="Card view">🗂 Card</button>
           <button id="me-view-list" onclick="setClView('me','list')" title="List view">📋 List</button>
@@ -1353,7 +1363,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="cl-actions">
           <button class="cl-btn cl-btn-gold" onclick="addClSection('me')">+ Add Section</button>
           <button class="cl-btn cl-btn-blue" onclick="showClHistory('me')">📜 History</button>
-          <button class="cl-btn cl-btn-red" onclick="resetChecklist('me')">🔄 New Month</button>
+          <button class="cl-btn cl-btn-red" onclick="jumpToTodayPeriod('me')" title="Jump to current month">📅 Today</button>
         </div>
       </div>
       <div class="cl-filter-bar">
@@ -1397,7 +1407,11 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="cl-sticky-head">
       <div class="cl-topbar">
         <div class="cl-heading">📆 Year End Checklist</div>
-        <div class="cl-period-badge" id="ye-period-badge">Loading…</div>
+        <div class="cl-period-nav">
+          <button class="cl-period-arrow" onclick="prevClPeriod('ye')" title="Previous year">‹</button>
+          <span class="cl-period-label" id="ye-period-badge" onclick="jumpToTodayPeriod('ye')" title="Click to jump to current year">Loading…</span>
+          <button class="cl-period-arrow" onclick="nextClPeriod('ye')" title="Next year">›</button>
+        </div>
         <div class="cl-view-seg" style="margin-left:auto">
           <button id="ye-view-card" onclick="setClView('ye','card')" title="Card view">🗂 Card</button>
           <button id="ye-view-list" onclick="setClView('ye','list')" title="List view">📋 List</button>
@@ -1406,7 +1420,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
         <div class="cl-actions">
           <button class="cl-btn cl-btn-gold" onclick="addClSection('ye')">+ Add Section</button>
           <button class="cl-btn cl-btn-blue" onclick="showClHistory('ye')">📜 History</button>
-          <button class="cl-btn cl-btn-red" onclick="resetChecklist('ye')">🔄 New Year</button>
+          <button class="cl-btn cl-btn-red" onclick="jumpToTodayPeriod('ye')" title="Jump to current year">📅 Today</button>
         </div>
       </div>
       <div class="cl-filter-bar">
@@ -4837,6 +4851,97 @@ let meHistory = [], yeHistory = [];
 let meViewMode = localStorage.getItem('naj_me_view') || 'card';
 let yeViewMode = localStorage.getItem('naj_ye_view') || 'card';
 
+// ════════════════════════════════════════
+// ME/YE PERIOD NAVIGATION + AUTO-ROLL
+// ════════════════════════════════════════
+// Current period state (defaults to today)
+function todayMePeriod() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function todayYePeriod() { return String(new Date().getFullYear()); }
+let meCurrentPeriod = localStorage.getItem('naj_me_period') || todayMePeriod();
+let yeCurrentPeriod = localStorage.getItem('naj_ye_period') || todayYePeriod();
+
+// Compute next/previous period (ME = month, YE = year)
+function nextPeriodOf(type, period) {
+  if (type === 'ye') return String(parseInt(period) + 1);
+  // ME: 'YYYY-MM' → next month
+  const [y, m] = period.split('-').map(Number);
+  const next = new Date(y, m, 1); // m is already incremented by 1 because Date months are 0-indexed
+  return next.getFullYear() + '-' + String(next.getMonth() + 1).padStart(2, '0');
+}
+function prevPeriodOf(type, period) {
+  if (type === 'ye') return String(parseInt(period) - 1);
+  const [y, m] = period.split('-').map(Number);
+  const prev = new Date(y, m - 2, 1);
+  return prev.getFullYear() + '-' + String(prev.getMonth() + 1).padStart(2, '0');
+}
+function formatPeriodLabel(type, period) {
+  if (type === 'ye') return 'FY ' + period;
+  const [y, m] = period.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+function getCurrentPeriod(type) { return type === 'me' ? meCurrentPeriod : yeCurrentPeriod; }
+function setCurrentPeriod(type, period) {
+  if (type === 'me') { meCurrentPeriod = period; localStorage.setItem('naj_me_period', period); }
+  else { yeCurrentPeriod = period; localStorage.setItem('naj_ye_period', period); }
+}
+function nextClPeriod(type) {
+  setCurrentPeriod(type, nextPeriodOf(type, getCurrentPeriod(type)));
+  renderChecklist(type);
+}
+function prevClPeriod(type) {
+  setCurrentPeriod(type, prevPeriodOf(type, getCurrentPeriod(type)));
+  renderChecklist(type);
+}
+function jumpToTodayPeriod(type) {
+  setCurrentPeriod(type, type === 'me' ? todayMePeriod() : todayYePeriod());
+  renderChecklist(type);
+}
+
+// Migration: backfill missing 'period' fields on items so they belong to a specific period
+function migrateClPeriods(type) {
+  const list = getClList(type);
+  const cur = getCurrentPeriod(type);
+  let migrated = false;
+  list.forEach(sec => {
+    (sec.items || []).forEach(it => {
+      if (!it.period) { it.period = cur; migrated = true; }
+    });
+  });
+  return migrated;
+}
+
+// Auto-roll: when a recurring item is completed, create next-period instance (if doesn't exist already)
+function autoRollIfNeeded(type, secId, item) {
+  if (!item.repeat || item.repeat === 'none') return;
+  if (!item.autoRoll) return;
+  const list = getClList(type);
+  const sec = list.find(s => s.id === secId);
+  if (!sec) return;
+  const tmplId = item.templateId || item.id;
+  if (!item.templateId) item.templateId = tmplId; // backfill so future instances are linked
+  const nextPer = nextPeriodOf(type, item.period || getCurrentPeriod(type));
+  // Skip if next-period instance already exists for this template
+  const exists = (sec.items || []).some(i => (i.templateId === tmplId || i.id === tmplId) && i.period === nextPer);
+  if (exists) return;
+  // Clone for next period
+  sec.items.push({
+    id: uid(),
+    templateId: tmplId,
+    text: item.text,
+    status: 'not_started',
+    assigned: item.assigned || '',
+    remarks: '',
+    remarksDate: '',
+    discussWithMgr: false,
+    mgrNotes: '',
+    repeat: item.repeat,
+    autoRoll: item.autoRoll,
+    period: nextPer,
+    expanded: false
+  });
+  showToast(`✓ Next-period item auto-created for ${formatPeriodLabel(type, nextPer)}`);
+}
+
 const DEFAULT_SECTIONS_ME = [
   { title: 'VAT & Tax', icon: '🧾', items: [
     'NL VAT return preparation (ASO B.V.)',
@@ -5072,7 +5177,7 @@ function clPanelSaveField(field, value, immediate) {
   if (!sec) return;
   const it = sec.items.find(i => i.id === clPanelItemId);
   if (!it) return;
-  if (field === 'discussWithMgr') it[field] = !!value;
+  if (field === 'discussWithMgr' || field === 'autoRoll') it[field] = !!value;
   else it[field] = value;
   if (field === 'remarks' && (value||'').trim() && !it.remarksDate) it.remarksDate = todayISO();
   showClPanelSaving();
@@ -5082,6 +5187,8 @@ function clPanelSaveField(field, value, immediate) {
     saveCl();
     showClPanelSaved();
     delete clPanelSaveTimers[field];
+    // Re-render panel if repeat changed (to enable/disable auto-roll checkbox)
+    if (field === 'repeat') renderClPanel();
   }, delay);
 }
 
@@ -5147,6 +5254,26 @@ function renderClPanel() {
         <input class="dl-panel-input" id="clp-mgr-note" type="text" placeholder="What to discuss with manager…" value="${esc(it.mgrNotes||'')}" style="margin-top:6px" oninput="clPanelSaveField('mgrNotes', this.value)">
       </div>
     </div>
+    <div class="dl-panel-row">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Repeat</label>
+        <select class="dl-panel-select" onchange="clPanelSaveField('repeat', this.value, true)">
+          <option value="none" ${(!it.repeat||it.repeat==='none')?'selected':''}>No repeat</option>
+          <option value="monthly" ${it.repeat==='monthly'?'selected':''}>${clPanelType==='ye'?'Yearly':'Monthly'}</option>
+        </select>
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Period</label>
+        <input class="dl-panel-input" type="text" value="${esc(it.period||getCurrentPeriod(clPanelType))}" readonly style="background:var(--bg2);cursor:not-allowed" title="Period this item belongs to">
+      </div>
+    </div>
+    <div class="dl-panel-field dl-panel-mgr-box" style="background:#fff8ee;border-color:#f0d898">
+      <input type="checkbox" id="clp-autoroll" ${it.autoRoll?'checked':''} onchange="clPanelSaveField('autoRoll', this.checked, true)" ${(!it.repeat||it.repeat==='none')?'disabled':''}>
+      <div class="dl-panel-mgr-info">
+        <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.6px">🔄 Auto-roll to next ${clPanelType==='ye'?'year':'month'}</div>
+        <div style="margin-top:2px">When this item is marked Completed, a fresh copy is automatically created for the next ${clPanelType==='ye'?'year':'month'}.</div>
+      </div>
+    </div>
     <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--bg2)">
       <button class="dl-panel-delete-btn" onclick="clPanelDeleteItem()">🗑 Delete this item</button>
     </div>
@@ -5179,6 +5306,10 @@ function hasAnyClFilter(type) {
 
 // Check if item matches all active filters
 function clItemMatchesFilters(type, it) {
+  // Period: only show items belonging to the currently-selected period
+  const curPeriod = getCurrentPeriod(type);
+  const itemPeriod = it.period || curPeriod;
+  if (itemPeriod !== curPeriod) return false;
   const fAssigned = (document.getElementById(type+'-filter-assigned')?.value || '').trim();
   const fDate = document.getElementById(type+'-filter-date')?.value || '';
   const fStatus = document.getElementById(type+'-filter-status')?.value || '';
@@ -5205,9 +5336,13 @@ function renderChecklist(type) {
   const wrap = document.getElementById(type === 'me' ? 'me-sections' : 'ye-sections');
   if (!wrap) return;
 
-  // Period badge
+  // Backfill periods on any items that don't have one (one-time migration on load)
+  if (migrateClPeriods(type)) saveCl();
+
+  // Period label (now showing the selected period — navigable)
+  const curPeriod = getCurrentPeriod(type);
   const periodEl = document.getElementById(type === 'me' ? 'me-period-badge' : 'ye-period-badge');
-  if (periodEl) periodEl.textContent = getClPeriodLabel(type);
+  if (periodEl) periodEl.textContent = formatPeriodLabel(type, curPeriod);
 
   // View-toggle highlighting
   ['card','list','board'].forEach(m => {
@@ -5218,15 +5353,19 @@ function renderChecklist(type) {
   // Refresh the assigned-people filter dropdown
   refreshClAssignedDropdown(type);
 
-  // Manager count
+  // Manager count (current period only)
   let mgrCount = 0;
-  list.forEach(sec => sec.items.forEach(it => { if (it.discussWithMgr) mgrCount++; }));
+  list.forEach(sec => sec.items.forEach(it => {
+    if ((it.period || curPeriod) !== curPeriod) return;
+    if (it.discussWithMgr) mgrCount++;
+  }));
   const mgrCountEl = document.getElementById(type === 'me' ? 'me-mgr-count' : 'ye-mgr-count');
   if (mgrCountEl) mgrCountEl.textContent = mgrCount;
 
-  // Overall progress (count completed + partial as half)
+  // Overall progress (only count items in the CURRENT period)
   let totalItems = 0, doneItems = 0, partialItems = 0;
   list.forEach(sec => sec.items.forEach(it => {
+    if ((it.period || curPeriod) !== curPeriod) return;
     totalItems++;
     if (it.status === 'completed') doneItems++;
     else if (it.status === 'partial' || it.status === 'ongoing') partialItems++;
@@ -5418,9 +5557,11 @@ function addClItem(type, secId) {
   sec.items.push({
     id: uid(), text,
     status: 'not_started', assigned: '', remarks: '', remarksDate: '',
-    discussWithMgr: false, mgrNotes: '', expanded: false
+    discussWithMgr: false, mgrNotes: '', expanded: false,
+    period: getCurrentPeriod(type),
+    repeat: 'none', autoRoll: false
   });
-  logAudit('ADD_CHECKLIST_ITEM', text, 'type=' + type + ' section=' + sec.title);
+  logAudit('ADD_CHECKLIST_ITEM', text, 'type=' + type + ' section=' + sec.title + ' period=' + getCurrentPeriod(type));
   saveCl();
   renderChecklist(type);
 }
@@ -5442,6 +5583,10 @@ function updateClItemStatus(type, secId, itemId, newStatus) {
   it.status = newStatus;
   // If partial, expand details so user can add remark
   if (newStatus === 'partial' && !it.remarks) it.expanded = true;
+  // Auto-roll: if going from non-complete to complete on a recurring auto-roll item, clone for next period
+  if (oldStatus !== 'completed' && newStatus === 'completed') {
+    autoRollIfNeeded(type, secId, it);
+  }
   logAudit('UPDATE_STATUS', it.text, `type=${type} ${oldStatus}→${newStatus}`);
   saveCl();
   renderChecklist(type);
