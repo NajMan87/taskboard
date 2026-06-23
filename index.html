@@ -100,7 +100,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .mgr-toggle-bar .mgr-count { background: rgba(0,0,0,0.1); padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 .mgr-toggle-bar.active .mgr-count { background: rgba(255,255,255,0.25); }
 
-.board { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; padding: 0 20px 28px; }
+.board { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; padding: 0 20px 28px; }
+@media (max-width: 1280px) { .board { grid-template-columns: repeat(2, 1fr); } }
+.task-assigned-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--purple-bg); color: var(--purple); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
 .column { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; min-height: 220px; }
 .col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 13px; padding-bottom: 11px; border-bottom: 1px solid var(--border); }
 .col-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -820,18 +822,18 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ll-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); padding:14px 18px; margin-bottom:12px; }
 
 /* ═══ NEW Lessons Learned layout ═══ */
-.ll-stats-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; background: linear-gradient(135deg, #fffbf0 0%, var(--surface) 100%); border: 1px solid #e8d8a8; border-radius: 10px; padding: 14px 18px; margin: 12px 0 14px; box-shadow: var(--shadow); }
-.ll-stat { display: flex; flex-direction: column; align-items: flex-start; }
-.ll-stat-num { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; line-height: 1.1; }
+.ll-stats-banner { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; background: linear-gradient(135deg, #fffbf0 0%, var(--surface) 100%); border: 1px solid #e8d8a8; border-radius: 8px; padding: 8px 14px; margin: 8px 0 10px; box-shadow: var(--shadow); }
+.ll-stat { display: flex; align-items: baseline; gap: 5px; }
+.ll-stat-num { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; line-height: 1; }
 .ll-stat-num.muted { color: var(--muted); }
 .ll-stat-num.gold { color: var(--gold); }
 .ll-stat-num.green { color: var(--green); }
 .ll-stat-num.red { color: var(--red); }
 .ll-stat-num.orange { color: var(--orange); }
-.ll-stat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-.ll-stat-detail { font-size: 11px; color: var(--text2); margin-top: 2px; font-style: italic; }
+.ll-stat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.ll-stat-detail { font-size: 11px; color: var(--text2); font-style: italic; }
 
-.ll-filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; padding: 4px 0; }
+.ll-filter-bar { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-bottom: 8px; padding: 2px 0; }
 .ll-filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
 .ll-filter-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px 11px; font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 500; color: var(--text2); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
 .ll-filter-chip:hover { background: var(--bg2); }
@@ -1024,6 +1026,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
   <button class="filter-btn" onclick="setFilter('todo',this)">To Do</button>
   <button class="filter-btn" onclick="setFilter('doing',this)">In Progress</button>
+  <button class="filter-btn" onclick="setFilter('followup',this)">👥 Follow-Up</button>
   <button class="filter-btn" onclick="setFilter('done',this)">Done</button>
   <button class="filter-btn" onclick="setFilter('overdue',this)" style="color:var(--red)">🔔 Overdue</button>
   <div class="search-wrap">
@@ -1040,6 +1043,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="column">
     <div class="col-head"><div class="col-dot" style="background:#2563a8"></div><span class="col-title">In Progress</span><span class="col-badge" id="c-doing">0</span></div>
     <div id="col-doing"></div>
+  </div>
+  <div class="column">
+    <div class="col-head"><div class="col-dot" style="background:#7a4cb0"></div><span class="col-title">👥 Follow-Up</span><span class="col-badge" id="c-followup">0</span></div>
+    <div id="col-followup"></div>
   </div>
   <div class="column">
     <div class="col-head"><div class="col-dot" style="background:#1e7a4a"></div><span class="col-title">Done</span><span class="col-badge" id="c-done">0</span></div>
@@ -1543,6 +1550,21 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="dl-form-field">
       <label class="dl-form-label">Deadline</label>
       <input type="date" id="edit-task-deadline" class="dl-form-input">
+    </div>
+    <div class="dl-form-row">
+      <div class="dl-form-field">
+        <label class="dl-form-label">Status</label>
+        <select id="edit-task-status" class="dl-form-select">
+          <option value="todo">📋 To Do</option>
+          <option value="doing">🔵 In Progress</option>
+          <option value="followup">👥 Follow-Up</option>
+          <option value="done">✅ Done</option>
+        </select>
+      </div>
+      <div class="dl-form-field">
+        <label class="dl-form-label">Assigned to (for Follow-Up)</label>
+        <input type="text" id="edit-task-assigned" class="dl-form-input" placeholder="e.g. Azeem, Laura, Jitka...">
+      </div>
     </div>
     <div class="dl-form-field" style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--purple-bg);border-radius:6px">
       <div class="cl-mgr-cb" id="edit-task-mgr-cb" onclick="this.classList.toggle('on')"></div>
@@ -2169,6 +2191,7 @@ function openMenu(id, e) {
     <div class="ctx-item mgr" onclick="toggleTaskMgr('${id}')">👔 ${t.discussWithMgr?'Remove':'Mark'} discuss with manager</div>
     <div class="ctx-item" onclick="moveTask('${id}','todo')">📋 Move → To Do</div>
     <div class="ctx-item" onclick="moveTask('${id}','doing')">🔵 Move → In Progress</div>
+    <div class="ctx-item" onclick="moveTask('${id}','followup')">👥 Move → Follow-Up</div>
     <div class="ctx-item" onclick="moveTask('${id}','done')">✅ Move → Done</div>
     <div class="ctx-item danger" onclick="deleteTask('${id}')">🗑 Delete</div>`;
   card.appendChild(menu);
@@ -2282,6 +2305,8 @@ function openEditTask(id) {
   document.getElementById('edit-task-title').value = t.title;
   document.getElementById('edit-task-priority').value = t.priority;
   document.getElementById('edit-task-deadline').value = t.deadline || '';
+  document.getElementById('edit-task-status').value = t.status || 'todo';
+  document.getElementById('edit-task-assigned').value = t.assignedTo || '';
   const tagSel = document.getElementById('edit-task-tag');
   Array.from(tagSel.options).forEach(o => { if (o.dataset.custom) o.remove(); });
   customTags.forEach(ct => {
@@ -2308,6 +2333,8 @@ function saveEditTask() {
   t.priority = document.getElementById('edit-task-priority').value;
   t.tag = document.getElementById('edit-task-tag').value;
   t.deadline = document.getElementById('edit-task-deadline').value || '';
+  t.status = document.getElementById('edit-task-status').value;
+  t.assignedTo = document.getElementById('edit-task-assigned').value.trim();
   t.discussWithMgr = document.getElementById('edit-task-mgr-cb').classList.contains('on');
   t.mgrNotes = document.getElementById('edit-task-mgr-note').value.trim();
   logAudit('EDIT_TASK', t.title, '');
@@ -2371,6 +2398,7 @@ function renderCol(elId, list) {
           <span class="tag ${tagClass}">${esc(tagLabel)}</span>
           <span class="prio prio-${t.priority}">${t.priority}</span>
           ${t.discussWithMgr ? '<span class="mgr-badge">👔 Manager</span>' : ''}
+          ${t.assignedTo ? `<span class="task-assigned-badge">👤 ${esc(t.assignedTo)}</span>` : ''}
           <span class="card-date">${t.date||''}</span>
         </div>
         ${mgrHtml}
@@ -2394,24 +2422,29 @@ function render() {
   const mgrCount = tasks.filter(t => t.discussWithMgr && t.status !== 'done').length;
   document.getElementById('board-mgr-count').textContent = mgrCount;
 
-  let todo, doing, done;
+  let todo, doing, followup, done;
   if (currentFilter === 'overdue') {
     todo = overdueTasks.filter(t=>t.status==='todo');
     doing = overdueTasks.filter(t=>t.status==='doing');
+    followup = overdueTasks.filter(t=>t.status==='followup');
     done = [];
   } else {
     todo = filtered.filter(t=>t.status==='todo');
     doing = filtered.filter(t=>t.status==='doing');
+    followup = filtered.filter(t=>t.status==='followup');
     done = filtered.filter(t=>t.status==='done');
-    if (currentFilter==='todo') { doing=[]; done=[]; }
-    if (currentFilter==='doing') { todo=[]; done=[]; }
-    if (currentFilter==='done') { todo=[]; doing=[]; }
+    if (currentFilter==='todo') { doing=[]; followup=[]; done=[]; }
+    if (currentFilter==='doing') { todo=[]; followup=[]; done=[]; }
+    if (currentFilter==='followup') { todo=[]; doing=[]; done=[]; }
+    if (currentFilter==='done') { todo=[]; doing=[]; followup=[]; }
   }
   renderCol('col-todo', todo);
   renderCol('col-doing', doing);
+  renderCol('col-followup', followup);
   renderCol('col-done', done);
   document.getElementById('c-todo').textContent = tasks.filter(t=>t.status==='todo').length;
   document.getElementById('c-doing').textContent = tasks.filter(t=>t.status==='doing').length;
+  document.getElementById('c-followup').textContent = tasks.filter(t=>t.status==='followup').length;
   document.getElementById('c-done').textContent = tasks.filter(t=>t.status==='done').length;
   document.getElementById('stat-total').textContent = tasks.length;
   document.getElementById('stat-done').textContent = tasks.filter(t=>t.status==='done').length;
@@ -3813,9 +3846,9 @@ function renderLessonStats() {
     <div class="ll-stat"><div class="ll-stat-num">${s.total}</div><div class="ll-stat-label">Total</div></div>
     <div class="ll-stat"><div class="ll-stat-num red">${s.withIssues}</div><div class="ll-stat-label">With issues</div></div>
     <div class="ll-stat"><div class="ll-stat-num green">${s.ontime}</div><div class="ll-stat-label">On time</div></div>
-    <div class="ll-stat"><div class="ll-stat-num blue" style="color:var(--blue)">${s.early}</div><div class="ll-stat-label">Early</div></div>
+    <div class="ll-stat"><div class="ll-stat-num" style="color:var(--blue)">${s.early}</div><div class="ll-stat-label">Early</div></div>
     <div class="ll-stat"><div class="ll-stat-num orange">${s.late}</div><div class="ll-stat-label">Late</div></div>
-    ${s.mostCommonTag ? `<div class="ll-stat" style="grid-column:span 2"><div class="ll-stat-detail">Most common: <strong style="color:var(--text)">${esc(s.mostCommonTag.toUpperCase())}</strong> (${s.mostCommonCount}) ${s.mostIssueTag ? ` · Most issues: <strong style="color:var(--red)">${esc(s.mostIssueTag.toUpperCase())}</strong> (${s.mostIssueCount})` : ''}</div></div>` : ''}
+    ${s.mostCommonTag ? `<div class="ll-stat-detail" style="margin-left:auto">Most common: <strong style="color:var(--text)">${esc(s.mostCommonTag.toUpperCase())}</strong> (${s.mostCommonCount})${s.mostIssueTag ? ` · Most issues: <strong style="color:var(--red)">${esc(s.mostIssueTag.toUpperCase())}</strong> (${s.mostIssueCount})` : ''}</div>` : ''}
   `;
 }
 
@@ -6002,6 +6035,11 @@ function openMgrSourceItem(sourceType, secId, itemId) {
 }
 
 function switchTab(name, btn) {
+  // Auto-close any side panel from the previous tab so it doesn't leak into the new one
+  if (typeof dlPanelId !== 'undefined' && dlPanelId) closeDlPanel();
+  if (typeof clPanelItemId !== 'undefined' && clPanelItemId) closeClPanel();
+  if (typeof refPanelId !== 'undefined' && refPanelId) closeRefPanel();
+  if (typeof llPanelId !== 'undefined' && llPanelId) closeLessonPanel();
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
