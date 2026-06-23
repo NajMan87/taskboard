@@ -747,6 +747,14 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-period-label { color: var(--gold); font-size: 13px; font-weight: 600; padding: 2px 8px; font-family: 'DM Sans', sans-serif; min-width: 110px; text-align: center; cursor: pointer; user-select: none; }
 .cl-period-label:hover { text-decoration: underline; }
 .cl-period-picker-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; left: -10px; }
+
+/* Reusable info icon with hover tooltip */
+.field-info { position: relative; display: inline-flex; align-items: center; margin-left: 4px; vertical-align: middle; }
+.field-info-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: var(--bg2); color: var(--muted); font-size: 9px; font-weight: 700; cursor: help; font-family: 'DM Sans', sans-serif; line-height: 1; transition: all 0.15s; }
+.field-info-icon:hover { background: var(--gold); color: white; }
+.field-info-tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--surface); padding: 7px 11px; border-radius: 6px; font-size: 11px; font-weight: 400; line-height: 1.5; white-space: normal; width: max-content; max-width: 240px; box-shadow: 0 4px 14px rgba(0,0,0,0.22); z-index: 250; opacity: 0; pointer-events: none; transition: opacity 0.15s; text-transform: none; letter-spacing: 0; }
+.field-info-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--text); }
+.field-info:hover .field-info-tip { opacity: 1; }
 .cl-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
 .cl-btn { padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s; display:flex; align-items:center; gap:6px; }
 .cl-btn:hover { opacity:.85; }
@@ -4185,13 +4193,13 @@ function renderLessonPanel() {
         <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="llCmd('notes','strikeThrough')" title="Strikethrough"><s>S</s></button>
         <div class="ref-tb-sep"></div>
         <select class="ref-tb-select" onmousedown="saveLlSelection()" onchange="llFont('notes',this.value);this.value=''" title="Font">
-          <option value="">Font ▾</option>
+          <option value="" disabled selected hidden>Font ▾</option>
           <option value="DM Sans, sans-serif">Sans</option>
           <option value="Playfair Display, Georgia, serif">Serif</option>
           <option value="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Mono</option>
         </select>
         <select class="ref-tb-select" onmousedown="saveLlSelection()" onchange="llSize('notes',this.value);this.value=''" title="Size">
-          <option value="">Size ▾</option>
+          <option value="" disabled selected hidden>Size ▾</option>
           <option value="2">Small</option>
           <option value="3">Normal</option>
           <option value="5">Large</option>
@@ -4558,13 +4566,13 @@ function renderRefPanel() {
         <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="refCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
         <div class="ref-tb-sep"></div>
         <select class="ref-tb-select" onmousedown="saveRefSelection()" onchange="refFont(this.value);this.value=''" title="Font family — select text first, then choose">
-          <option value="">Font ▾</option>
+          <option value="" disabled selected hidden>Font ▾</option>
           <option value="DM Sans, sans-serif">Sans</option>
           <option value="Playfair Display, Georgia, serif">Serif</option>
           <option value="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Mono</option>
         </select>
         <select class="ref-tb-select" onmousedown="saveRefSelection()" onchange="refSize(this.value);this.value=''" title="Text size — select text first, then choose">
-          <option value="">Size ▾</option>
+          <option value="" disabled selected hidden>Size ▾</option>
           <option value="2">Small</option>
           <option value="3">Normal</option>
           <option value="5">Large</option>
@@ -5354,14 +5362,14 @@ function renderClPanel() {
     </div>
     <div class="dl-panel-row">
       <div class="dl-panel-field">
-        <label class="dl-panel-label">Repeat</label>
+        <label class="dl-panel-label">Repeat <span class="field-info"><span class="field-info-icon">i</span><span class="field-info-tip">Set to ${clPanelType==='ye'?'Yearly':'Monthly'} for recurring items (e.g. payroll JV every month). Used together with Auto-roll below.</span></span></label>
         <select class="dl-panel-select" onchange="clPanelSaveField('repeat', this.value, true)">
           <option value="none" ${(!it.repeat||it.repeat==='none')?'selected':''}>No repeat</option>
           <option value="monthly" ${it.repeat==='monthly'?'selected':''}>${clPanelType==='ye'?'Yearly':'Monthly'}</option>
         </select>
       </div>
       <div class="dl-panel-field">
-        <label class="dl-panel-label">Period (change to move this item)</label>
+        <label class="dl-panel-label">Period <span class="field-info"><span class="field-info-icon">i</span><span class="field-info-tip">Change this value to move the item to a different ${clPanelType==='ye'?'year':'month'}. The view will jump to where the item ends up.</span></span></label>
         ${clPanelType === 'ye'
           ? `<input class="dl-panel-input" type="number" min="2000" max="2099" step="1" value="${esc(it.period||getCurrentPeriod(clPanelType))}" onchange="clPanelChangePeriod(this.value)" title="Year this item belongs to (YYYY)">`
           : `<input class="dl-panel-input" type="month" value="${esc(it.period||getCurrentPeriod(clPanelType))}" onchange="clPanelChangePeriod(this.value)" title="Month this item belongs to">`}
@@ -6195,6 +6203,7 @@ function renderMgrList() {
           <div class="mgr-clarified-cb">
             <input type="checkbox" id="mgr-cl-${itemKey.replace(/:/g,'_')}" ${clarified?'checked':''} onchange="mgrToggleClarified('${itemKey}', this.checked)">
             <label for="mgr-cl-${itemKey.replace(/:/g,'_')}">Mark as Clarified</label>
+            <span class="field-info"><span class="field-info-icon">i</span><span class="field-info-tip">Tick when you've discussed this with the manager and have their answer. The item moves to the Clarified sub-list. Original item stays untouched everywhere else.</span></span>
           </div>
           ${clarifiedDate}
           <span class="mgr-saving-ind" id="mgr-ind-${itemKey.replace(/:/g,'_')}"></span>
@@ -6414,7 +6423,7 @@ function renderTaskPanel() {
       </div>
     </div>
     <div class="dl-panel-field" ${isFollowup?'':'style="opacity:0.6"'}>
-      <label class="dl-panel-label">Assigned to ${isFollowup ? '(person to follow up with)' : '(set when in Follow-Up status)'}</label>
+      <label class="dl-panel-label">Assigned to <span class="field-info"><span class="field-info-icon">i</span><span class="field-info-tip">The person you're following up with. Only relevant when status is Follow-Up — the name shows as a 👤 badge on the card.</span></span></label>
       <input class="dl-panel-input" type="text" placeholder="e.g. Azeem, Laura, Jitka…" value="${esc(t.assignedTo||'')}" oninput="taskPanelSaveField('assignedTo', this.value)">
     </div>
     <div class="dl-panel-field dl-panel-mgr-box">
@@ -6433,13 +6442,13 @@ function renderTaskPanel() {
         <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
         <div class="ref-tb-sep"></div>
         <select class="ref-tb-select" onmousedown="saveTaskSelection()" onchange="taskFont(this.value);this.value=''" title="Font">
-          <option value="">Font ▾</option>
+          <option value="" disabled selected hidden>Font ▾</option>
           <option value="DM Sans, sans-serif">Sans</option>
           <option value="Playfair Display, Georgia, serif">Serif</option>
           <option value="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Mono</option>
         </select>
         <select class="ref-tb-select" onmousedown="saveTaskSelection()" onchange="taskSize(this.value);this.value=''" title="Size">
-          <option value="">Size ▾</option>
+          <option value="" disabled selected hidden>Size ▾</option>
           <option value="2">Small</option>
           <option value="3">Normal</option>
           <option value="5">Large</option>
