@@ -861,6 +861,8 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .ll-status-badge.ontime { background: var(--green-bg); color: var(--green); }
 .ll-status-badge.late { background: #fff3e0; color: var(--orange); }
 .ll-issues-badge { background: var(--red-bg); color: var(--red); font-size: 9px; padding: 2px 7px; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.ll-card-link-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--text2); transition: all 0.15s; line-height: 1; }
+.ll-card-link-btn:hover { background: var(--gold); color: white; border-color: var(--gold); transform: translateY(-1px); }
 
 .ll-card-new-meta { display: flex; gap: 10px; align-items: center; padding: 0 14px 8px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
 .ll-card-new-meta .ll-tag-chip { font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -1199,7 +1201,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
       </div>
     </div>
     <div class="ll-scroll-body">
-      <div id="ll-stats-banner"></div>
+      <div class="ll-stats-banner" id="ll-stats-banner"></div>
       <div class="ll-filter-bar" id="ll-filter-bar"></div>
       <div class="ll-toggles-row">
         <label class="ll-toggle" id="ll-toggle-issues" onclick="toggleLlIssuesOnly()">⚠ Show only with issues</label>
@@ -3924,6 +3926,7 @@ function renderLessonCard(l) {
       <div class="ll-card-new-head">
         <span class="ll-card-new-title">${esc(l.title)}</span>
         <div class="ll-card-new-badges">
+          ${l.deadlineId ? `<button class="ll-card-link-btn" onclick="event.stopPropagation();gotoOriginalDeadline('${l.id}')" title="Open original deadline">↗</button>` : ''}
           ${hasIssues ? '<span class="ll-issues-badge">⚠ Issues</span>' : ''}
           <span class="ll-status-badge ${status}">${statusLabel}</span>
         </div>
@@ -4025,6 +4028,29 @@ function llPanelDelete() {
   showToast('Lesson deleted.');
 }
 
+// Navigate from a lesson card/panel to its source deadline
+function gotoOriginalDeadline(lessonId) {
+  const l = lessons.find(x => x.id === lessonId);
+  if (!l) return;
+  if (!l.deadlineId) {
+    showToast('No linked deadline (this lesson has no source).');
+    return;
+  }
+  const dl = deadlines.find(d => d.id === l.deadlineId);
+  if (!dl) {
+    showToast('Original deadline no longer exists — it may have been deleted.');
+    return;
+  }
+  // Close the lesson panel first
+  if (llPanelId) closeLessonPanel();
+  // Switch to Deadlines tab
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.includes('Deadlines')) b.click();
+  });
+  // Open deadline panel after tab switch
+  setTimeout(() => openDlPanel(l.deadlineId), 250);
+}
+
 function renderLessonPanel() {
   const l = lessons.find(x => x.id === llPanelId);
   if (!l) { closeLessonPanel(); return; }
@@ -4033,6 +4059,9 @@ function renderLessonPanel() {
   document.getElementById('ll-panel-title').textContent = '📖 ' + (l.title || 'Lesson');
   const body = document.getElementById('ll-panel-body');
   body.innerHTML = `
+    ${l.deadlineId && deadlines.find(d => d.id === l.deadlineId) ? `
+      <button onclick="gotoOriginalDeadline('${l.id}')" style="width:100%;padding:9px 14px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;transition:opacity 0.15s">🗓 View original deadline →</button>
+    ` : ''}
     <div class="dl-panel-field">
       <label class="dl-panel-label">Title</label>
       <input class="dl-panel-input" type="text" value="${esc(l.title||'')}" oninput="llPanelSaveField('title', this.value)">
