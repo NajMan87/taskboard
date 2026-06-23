@@ -783,6 +783,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-item-status-sel.partial { background:#fff8ee; color:var(--gold); }
 .cl-item-status-sel.ongoing { background:var(--blue-bg); color:var(--blue); }
 .cl-item-status-sel.completed { background:var(--green-bg); color:var(--green); }
+/* Bigger, more prominent status in side panel */
+.dl-panel-select.cl-item-status-sel { font-size: 13px; padding: 9px 11px; border-radius: 7px; letter-spacing: 0.5px; border: 1px solid var(--border); }
+.dl-panel-select.cl-item-status-sel.not_started { background:#f0e9e1; color:#5c554c; border-color: var(--border); }
+.dl-panel-select.cl-item-status-sel.partial { background:#fff3d6; color:#8a6b1f; border-color: #f0d898; }
+.dl-panel-select.cl-item-status-sel.ongoing { background:#d8e6f6; color:#1d4f88; border-color: #b8d4f8; }
+.dl-panel-select.cl-item-status-sel.completed { background:#d6e8c8; color:#3d6928; border-color: #c4e8a9; }
 .cl-item-text { flex:1; font-size:13px; color:var(--text); line-height:1.5; border:none; background:transparent; outline:none; font-family:'DM Sans',sans-serif; resize:none; padding:0; }
 .cl-item-text.completed-text { text-decoration:line-through; color:var(--muted); }
 .cl-item-del { background:none; border:none; color:transparent; cursor:pointer; font-size:13px; padding:0 3px; transition:color .1s; flex-shrink:0; }
@@ -5263,6 +5269,33 @@ function clPanelChangeStatus(newStatus) {
   renderClPanel();
 }
 
+// Change which period this checklist item belongs to (and navigate to it)
+function clPanelChangePeriod(newPeriod) {
+  if (!newPeriod) return;
+  const list = getClList(clPanelType);
+  const sec = list.find(s => s.id === clPanelSecId);
+  if (!sec) return;
+  const it = sec.items.find(i => i.id === clPanelItemId);
+  if (!it) return;
+  // Normalize and validate
+  let normalized;
+  if (clPanelType === 'ye') {
+    const yr = parseInt(newPeriod);
+    if (isNaN(yr) || yr < 1900 || yr > 2200) return;
+    normalized = String(yr);
+  } else {
+    if (!/^\d{4}-\d{2}$/.test(newPeriod)) return;
+    normalized = newPeriod;
+  }
+  it.period = normalized;
+  saveCl(); pushToCloud();
+  showClPanelSaving(); showClPanelSaved();
+  // Auto-navigate to the new period so user can see the item there
+  setCurrentPeriod(clPanelType, normalized);
+  renderChecklist(clPanelType);
+  showToast(`✓ Item moved to ${formatPeriodLabel(clPanelType, normalized)}`);
+}
+
 function clPanelDeleteItem() {
   if (!confirm('Delete this checklist item?')) return;
   const list = getClList(clPanelType);
@@ -5328,8 +5361,10 @@ function renderClPanel() {
         </select>
       </div>
       <div class="dl-panel-field">
-        <label class="dl-panel-label">Period</label>
-        <input class="dl-panel-input" type="text" value="${esc(it.period||getCurrentPeriod(clPanelType))}" readonly style="background:var(--bg2);cursor:not-allowed" title="Period this item belongs to">
+        <label class="dl-panel-label">Period (change to move this item)</label>
+        ${clPanelType === 'ye'
+          ? `<input class="dl-panel-input" type="number" min="2000" max="2099" step="1" value="${esc(it.period||getCurrentPeriod(clPanelType))}" onchange="clPanelChangePeriod(this.value)" title="Year this item belongs to (YYYY)">`
+          : `<input class="dl-panel-input" type="month" value="${esc(it.period||getCurrentPeriod(clPanelType))}" onchange="clPanelChangePeriod(this.value)" title="Month this item belongs to">`}
       </div>
     </div>
     <div class="dl-panel-field dl-panel-mgr-box" style="background:#fff8ee;border-color:#f0d898">
