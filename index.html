@@ -1679,6 +1679,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
   <div class="dl-panel-body" id="ll-panel-body"></div>
 </div>
 
+<!-- TASK SIDE PANEL (full editor with rich text notes) -->
+<div class="dl-side-panel" id="task-side-panel">
+  <div class="dl-panel-head">
+    <span class="dl-panel-title" id="task-panel-title">Task</span>
+    <span class="dl-panel-save-ind" id="task-panel-save-ind"></span>
+    <button class="dl-panel-close" onclick="closeTaskPanel()" title="Close (Esc)">×</button>
+  </div>
+  <div class="dl-panel-body" id="task-panel-body"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2299,26 +2309,8 @@ document.addEventListener('click', closeMenu);
 
 function openEditTask(id) {
   closeMenu();
-  const t = tasks.find(x => x.id === id);
-  if (!t) return;
-  editingTaskId = id;
-  document.getElementById('edit-task-title').value = t.title;
-  document.getElementById('edit-task-priority').value = t.priority;
-  document.getElementById('edit-task-deadline').value = t.deadline || '';
-  document.getElementById('edit-task-status').value = t.status || 'todo';
-  document.getElementById('edit-task-assigned').value = t.assignedTo || '';
-  const tagSel = document.getElementById('edit-task-tag');
-  Array.from(tagSel.options).forEach(o => { if (o.dataset.custom) o.remove(); });
-  customTags.forEach(ct => {
-    const o = document.createElement('option');
-    o.value = 'custom:' + ct; o.textContent = ct; o.dataset.custom = '1';
-    tagSel.appendChild(o);
-  });
-  tagSel.value = t.tag || 'general';
-  const cb = document.getElementById('edit-task-mgr-cb');
-  if (t.discussWithMgr) cb.classList.add('on'); else cb.classList.remove('on');
-  document.getElementById('edit-task-mgr-note').value = t.mgrNotes || '';
-  document.getElementById('edit-task-modal').classList.add('show');
+  // Open the new side panel instead of the modal
+  openTaskPanel(id);
 }
 function closeEditTask() {
   document.getElementById('edit-task-modal').classList.remove('show');
@@ -2389,7 +2381,7 @@ function renderCol(elId, list) {
       <div class="task-card ${t.status==='done'?'is-done':''} ${ds==='overdue'&&t.status!=='done'?'is-overdue':''} ${ds==='due-soon'&&t.status!=='done'?'is-due-soon':''} ${t.discussWithMgr?'has-mgr':''} ${selectedTaskIds.has(t.id)?'selected':''}" id="card-${t.id}">
         <div class="card-top">
           <div class="check-box ${t.status==='done'?'checked':''}" onclick="toggleCheck('${t.id}')"></div>
-          <span class="task-title">${esc(t.title)}</span>
+          <span class="task-title" onclick="openTaskPanel('${t.id}')" style="cursor:pointer" title="Click to open in panel">${esc(t.title)}</span>
           <div class="task-sel-cb ${selectedTaskIds.has(t.id)?'selected':''}" onclick="toggleTaskSelection('${t.id}', event)" title="Select to merge with other tasks"></div>
           <button class="card-menu-btn" onclick="openMenu('${t.id}',event)">⋯</button>
         </div>
@@ -3747,6 +3739,7 @@ document.addEventListener('keydown', function(e) {
     else if (clPanelItemId) closeClPanel();
     else if (refPanelId) closeRefPanel();
     else if (llPanelId) closeLessonPanel();
+    else if (taskPanelId) closeTaskPanel();
   }
 });
 
@@ -6013,11 +6006,11 @@ function mgrToggleClarified(key, checked) {
 // Open the source item — uses appropriate panel or modal
 function openMgrSourceItem(sourceType, secId, itemId) {
   if (sourceType === 'task') {
-    // Switch to Board tab and open edit modal
+    // Switch to Board tab and open task side panel
     document.querySelectorAll('.tab-btn').forEach(b => {
       if (b.textContent.includes('Board')) b.click();
     });
-    setTimeout(() => { if (typeof openEditTask === 'function') openEditTask(itemId); }, 200);
+    setTimeout(() => openTaskPanel(itemId), 250);
   } else if (sourceType === 'deadline') {
     // Switch to Deadlines tab and open side panel
     document.querySelectorAll('.tab-btn').forEach(b => {
@@ -6034,12 +6027,305 @@ function openMgrSourceItem(sourceType, secId, itemId) {
   }
 }
 
+// ════════════════════════════════════════
+// 🎨 TASK SIDE PANEL — full editor with rich text notes
+// ════════════════════════════════════════
+let taskPanelId = null;
+let taskPanelSaveTimers = {};
+let taskSavedRange = null;
+
+function saveTaskSelection() {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const r = sel.getRangeAt(0);
+    const ed = document.getElementById('taskp-editor');
+    if (ed && ed.contains(r.commonAncestorContainer)) taskSavedRange = r.cloneRange();
+  }
+}
+function restoreTaskSelection() {
+  if (!taskSavedRange) return false;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(taskSavedRange);
+  return true;
+}
+
+function openTaskPanel(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const panelEl = document.getElementById('task-side-panel');
+  if (taskPanelId === id && panelEl && panelEl.classList.contains('open')) {
+    closeTaskPanel();
+    return;
+  }
+  if (taskPanelId && taskPanelId !== id) flushAllTaskPanelSaves();
+  taskPanelId = id;
+  renderTaskPanel();
+  panelEl.classList.add('open');
+}
+
+function closeTaskPanel() {
+  flushAllTaskPanelSaves();
+  taskPanelId = null;
+  document.getElementById('task-side-panel').classList.remove('open');
+  render();
+}
+
+function flushAllTaskPanelSaves() {
+  Object.keys(taskPanelSaveTimers).forEach(k => { clearTimeout(taskPanelSaveTimers[k]); delete taskPanelSaveTimers[k]; });
+  saveLocal(); pushToCloud();
+}
+
+function showTaskPanelSaving() {
+  const ind = document.getElementById('task-panel-save-ind');
+  if (ind) { ind.textContent = '⏳ Saving…'; ind.className = 'dl-panel-save-ind saving'; }
+}
+function showTaskPanelSaved() {
+  const ind = document.getElementById('task-panel-save-ind');
+  if (ind) { ind.textContent = '✓ Saved'; ind.className = 'dl-panel-save-ind saved'; }
+  setTimeout(() => { if (ind && ind.textContent === '✓ Saved') { ind.textContent = ''; ind.className = 'dl-panel-save-ind'; } }, 2200);
+}
+
+function taskPanelSaveField(field, value, immediate) {
+  const t = tasks.find(x => x.id === taskPanelId);
+  if (!t) return;
+  if (field === 'discussWithMgr') t[field] = !!value;
+  else t[field] = value;
+  showTaskPanelSaving();
+  clearTimeout(taskPanelSaveTimers[field]);
+  taskPanelSaveTimers[field] = setTimeout(() => {
+    saveLocal(); pushToCloud();
+    showTaskPanelSaved();
+    delete taskPanelSaveTimers[field];
+    // Re-render board for status/title/tag/priority/deadline/assigned changes
+    if (['status','title','tag','priority','deadline','assignedTo','discussWithMgr'].includes(field)) render();
+  }, immediate ? 0 : 700);
+}
+
+function taskPanelSaveNotes(html) { taskPanelSaveField('notes', html); }
+
+function taskPanelDelete() {
+  if (!confirm('Delete this task? This cannot be undone.')) return;
+  const t = tasks.find(x => x.id === taskPanelId);
+  if (t) logAudit('DELETE_TASK', t.title, '(via panel)');
+  tasks = tasks.filter(x => x.id !== taskPanelId);
+  taskPanelId = null;
+  document.getElementById('task-side-panel').classList.remove('open');
+  saveLocal(); pushToCloud();
+  render();
+  showToast('Task deleted.');
+}
+
+// Build the tag <select> for task panel (built-in + custom tags + add-new)
+function buildTaskPanelTagOptions(currentTag) {
+  let html = '';
+  const builtins = [['general','General'],['vat','VAT'],['finance','Finance'],['audit','Audit'],['procurement','Procurement']];
+  builtins.forEach(([v,l]) => { html += `<option value="${v}" ${currentTag===v?'selected':''}>${l}</option>`; });
+  customTags.forEach(ct => {
+    html += `<option value="custom:${esc(ct)}" data-custom="1" ${currentTag==='custom:'+ct?'selected':''}>${esc(ct.toUpperCase())}</option>`;
+  });
+  return html;
+}
+
+function renderTaskPanel() {
+  const t = tasks.find(x => x.id === taskPanelId);
+  if (!t) { closeTaskPanel(); return; }
+  document.getElementById('task-panel-title').textContent = '🗂 ' + (t.title || 'Task');
+  const body = document.getElementById('task-panel-body');
+  const isFollowup = t.status === 'followup';
+  body.innerHTML = `
+    <div class="dl-panel-field">
+      <label class="dl-panel-label">Title</label>
+      <input class="dl-panel-input" id="taskp-title" type="text" value="${esc(t.title||'')}" oninput="taskPanelSaveField('title', this.value)">
+    </div>
+    <div class="dl-panel-row">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Status</label>
+        <select class="dl-panel-select" onchange="taskPanelSaveField('status', this.value, true)">
+          <option value="todo" ${t.status==='todo'?'selected':''}>📋 To Do</option>
+          <option value="doing" ${t.status==='doing'?'selected':''}>🔵 In Progress</option>
+          <option value="followup" ${t.status==='followup'?'selected':''}>👥 Follow-Up</option>
+          <option value="done" ${t.status==='done'?'selected':''}>✅ Done</option>
+        </select>
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Priority</label>
+        <select class="dl-panel-select" onchange="taskPanelSaveField('priority', this.value, true)">
+          <option value="high" ${t.priority==='high'?'selected':''}>🔴 High</option>
+          <option value="medium" ${t.priority==='medium'?'selected':''}>🟡 Medium</option>
+          <option value="low" ${t.priority==='low'?'selected':''}>🟢 Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="dl-panel-row">
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Tag</label>
+        <select class="dl-panel-select" onchange="taskPanelSaveField('tag', this.value, true)">
+          ${buildTaskPanelTagOptions(t.tag||'general')}
+        </select>
+      </div>
+      <div class="dl-panel-field">
+        <label class="dl-panel-label">Deadline</label>
+        <input class="dl-panel-input" type="date" value="${esc(t.deadline||'')}" oninput="taskPanelSaveField('deadline', this.value)">
+      </div>
+    </div>
+    <div class="dl-panel-field" ${isFollowup?'':'style="opacity:0.6"'}>
+      <label class="dl-panel-label">Assigned to ${isFollowup ? '(person to follow up with)' : '(set when in Follow-Up status)'}</label>
+      <input class="dl-panel-input" type="text" placeholder="e.g. Azeem, Laura, Jitka…" value="${esc(t.assignedTo||'')}" oninput="taskPanelSaveField('assignedTo', this.value)">
+    </div>
+    <div class="dl-panel-field dl-panel-mgr-box">
+      <input type="checkbox" id="taskp-mgr" ${t.discussWithMgr?'checked':''} onchange="taskPanelSaveField('discussWithMgr', this.checked, true)">
+      <div class="dl-panel-mgr-info">
+        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px">💬 Discuss with manager</div>
+        <input class="dl-panel-input" type="text" placeholder="What to discuss with manager…" value="${esc(t.mgrNotes||'')}" style="margin-top:6px" oninput="taskPanelSaveField('mgrNotes', this.value)">
+      </div>
+    </div>
+    <div class="dl-panel-section">
+      <div class="dl-panel-section-title">📝 Notes</div>
+      <div class="ref-toolbar">
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('bold')" title="Bold"><b>B</b></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('italic')" title="Italic"><i>I</i></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('underline')" title="Underline"><u>U</u></button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+        <div class="ref-tb-sep"></div>
+        <select class="ref-tb-select" onmousedown="saveTaskSelection()" onchange="taskFont(this.value);this.value=''" title="Font">
+          <option value="">Font ▾</option>
+          <option value="DM Sans, sans-serif">Sans</option>
+          <option value="Playfair Display, Georgia, serif">Serif</option>
+          <option value="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Mono</option>
+        </select>
+        <select class="ref-tb-select" onmousedown="saveTaskSelection()" onchange="taskSize(this.value);this.value=''" title="Size">
+          <option value="">Size ▾</option>
+          <option value="2">Small</option>
+          <option value="3">Normal</option>
+          <option value="5">Large</option>
+          <option value="6">Huge</option>
+        </select>
+        <button class="ref-tb-btn" onmousedown="saveTaskSelection();event.preventDefault()" onclick="toggleTaskColorPicker(event)" title="Text color">A▾</button>
+        <div class="ref-tb-sep"></div>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('insertUnorderedList')" title="Bullet list">•</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('insertOrderedList')" title="Numbered list">1.</button>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskBlock('blockquote')" title="Block quote — click again to remove">❝</button>
+        <div class="ref-tb-sep"></div>
+        <button class="ref-tb-btn" onmousedown="event.preventDefault()" onclick="taskCmd('removeFormat')" title="Clear formatting">✕</button>
+      </div>
+      <div class="ref-editor" id="taskp-editor" contenteditable="true" data-placeholder="Add notes, context, links, references…" oninput="taskPanelSaveNotes(this.innerHTML)" onmouseup="saveTaskSelection()" onkeyup="saveTaskSelection()"></div>
+    </div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bg2);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--muted)">Created ${esc(t.date||'—')}</span>
+      <button class="dl-panel-delete-btn" onclick="taskPanelDelete()">🗑 Delete task</button>
+    </div>
+  `;
+  // Initialize the editor content
+  const ed = document.getElementById('taskp-editor');
+  if (ed) {
+    const content = t.notes || '';
+    if (content && /<[a-z][^>]*>/i.test(content)) ed.innerHTML = content;
+    else ed.innerHTML = esc(content).replace(/\n/g, '<br>');
+  }
+}
+
+// Rich-text handlers for task panel
+function taskCmd(cmd) {
+  const ed = document.getElementById('taskp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreTaskSelection();
+  document.execCommand(cmd, false, null);
+  saveTaskSelection();
+  taskPanelSaveNotes(ed.innerHTML);
+}
+function taskFont(ff) {
+  if (!ff) return;
+  const ed = document.getElementById('taskp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreTaskSelection();
+  document.execCommand('fontName', false, ff);
+  saveTaskSelection();
+  taskPanelSaveNotes(ed.innerHTML);
+}
+function taskSize(size) {
+  if (!size) return;
+  const ed = document.getElementById('taskp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreTaskSelection();
+  document.execCommand('fontSize', false, size);
+  saveTaskSelection();
+  taskPanelSaveNotes(ed.innerHTML);
+}
+function taskBlock(tag) {
+  const ed = document.getElementById('taskp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreTaskSelection();
+  let blockEl = null;
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    let node = sel.getRangeAt(0).startContainer;
+    while (node && node !== ed) {
+      if (node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === tag) { blockEl = node; break; }
+      node = node.parentNode;
+    }
+  }
+  if (blockEl) {
+    const parent = blockEl.parentNode;
+    while (blockEl.firstChild) parent.insertBefore(blockEl.firstChild, blockEl);
+    parent.removeChild(blockEl);
+  } else {
+    document.execCommand('formatBlock', false, '<' + tag + '>');
+  }
+  saveTaskSelection();
+  taskPanelSaveNotes(ed.innerHTML);
+}
+function taskColor(color) {
+  const ed = document.getElementById('taskp-editor');
+  if (!ed) return;
+  ed.focus();
+  restoreTaskSelection();
+  document.execCommand('foreColor', false, color);
+  saveTaskSelection();
+  hideTaskColorPicker();
+  taskPanelSaveNotes(ed.innerHTML);
+}
+function toggleTaskColorPicker(e) {
+  e.stopPropagation();
+  if (document.getElementById('task-color-picker')) { hideTaskColorPicker(); return; }
+  const picker = document.createElement('div');
+  picker.id = 'task-color-picker';
+  picker.className = 'ref-color-picker';
+  const colors = [
+    ['#1a1714','Default'], ['#5c554c','Gray'], ['#c8311c','Red'], ['#c95f0a','Orange'],
+    ['#b08d3a','Gold'], ['#5e8a3a','Green'], ['#2563a8','Blue'], ['#7a4cb0','Purple']
+  ];
+  picker.innerHTML = colors.map(([c, n]) =>
+    `<div class="ref-color-swatch" style="background:${c}" title="${n}" onclick="taskColor('${c}')"></div>`
+  ).join('');
+  const btn = e.target;
+  const toolbar = btn.closest('.ref-toolbar');
+  toolbar.appendChild(picker);
+  picker.style.top = (btn.offsetTop + btn.offsetHeight + 4) + 'px';
+  picker.style.left = btn.offsetLeft + 'px';
+  setTimeout(() => document.addEventListener('click', closeTaskColorPickerOnOutside), 30);
+}
+function closeTaskColorPickerOnOutside(e) {
+  if (e.target.closest('#task-color-picker') || e.target.classList.contains('ref-tb-btn')) return;
+  hideTaskColorPicker();
+}
+function hideTaskColorPicker() {
+  const p = document.getElementById('task-color-picker');
+  if (p) p.remove();
+  document.removeEventListener('click', closeTaskColorPickerOnOutside);
+}
+
 function switchTab(name, btn) {
   // Auto-close any side panel from the previous tab so it doesn't leak into the new one
   if (typeof dlPanelId !== 'undefined' && dlPanelId) closeDlPanel();
   if (typeof clPanelItemId !== 'undefined' && clPanelItemId) closeClPanel();
   if (typeof refPanelId !== 'undefined' && refPanelId) closeRefPanel();
   if (typeof llPanelId !== 'undefined' && llPanelId) closeLessonPanel();
+  if (typeof taskPanelId !== 'undefined' && taskPanelId) closeTaskPanel();
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
