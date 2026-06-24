@@ -146,6 +146,17 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .card-edit-btn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 3px; opacity: 0; transition: opacity 0.1s; line-height: 1; flex-shrink: 0; }
 .task-card:hover .card-edit-btn { opacity: 0.85; }
 .card-edit-btn:hover { opacity: 1 !important; transform: scale(1.15); }
+.card-pin-btn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 3px; opacity: 0; transition: opacity 0.1s; line-height: 1; flex-shrink: 0; filter: grayscale(1); }
+.task-card:hover .card-pin-btn { opacity: 0.55; }
+.card-pin-btn:hover { opacity: 1 !important; filter: grayscale(0); transform: scale(1.15); }
+.card-pin-btn.pinned { opacity: 1 !important; filter: grayscale(0); }
+.task-card.is-pinned { border-left: 3px solid var(--gold); background: linear-gradient(to right, #fffaee 0%, var(--surface) 30%); }
+.card-pin-btn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 3px; opacity: 0; transition: all 0.15s; line-height: 1; flex-shrink: 0; }
+.task-card:hover .card-pin-btn { opacity: 0.55; }
+.card-pin-btn:hover { opacity: 1 !important; transform: scale(1.2); }
+.card-pin-btn.pinned { opacity: 1 !important; color: var(--gold); }
+.task-card.is-pinned { background: linear-gradient(180deg, #fffbf0 0%, var(--surface) 100%); border-color: #e8c97a; box-shadow: 0 1px 8px rgba(193,127,42,0.12); }
+.task-card.is-pinned::before { content: '📌'; position: absolute; top: -6px; right: -6px; font-size: 13px; }
 .card-menu-btn:hover { color: var(--text); }
 .card-deadline { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 11px; color: var(--muted); }
 .card-deadline.overdue { color: var(--over); font-weight: 600; }
@@ -270,9 +281,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .dl-panel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dl-panel-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bg2); }
 .dl-panel-section-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
-.dl-panel-mgr-box { display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px; background: var(--purple-bg); border-radius: 7px; border: 1px solid #d4c0e6; }
-.dl-panel-mgr-box input[type=checkbox] { width: 16px; height: 16px; margin: 2px 0 0 0; cursor: pointer; flex-shrink: 0; }
-.dl-panel-mgr-info { flex: 1; font-size: 11px; color: var(--text2); line-height: 1.5; }
+.dl-panel-mgr-box { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--purple-bg); border-radius: 6px; border: 1px solid #d4c0e6; }
+.dl-panel-mgr-box.has-on, .dl-panel-mgr-box.dl-panel-mgr-active { padding: 9px 11px; align-items: flex-start; }
+.dl-panel-mgr-box input[type=checkbox] { width: 14px; height: 14px; margin: 0; cursor: pointer; flex-shrink: 0; accent-color: var(--purple); }
+.dl-panel-mgr-info { flex: 1; min-width: 0; }
+.dl-panel-mgr-label-compact { font-size: 10px; font-weight: 700; color: var(--purple); letter-spacing: .4px; text-transform: uppercase; }
+.dl-panel-mgr-hint { font-size: 9px; color: var(--muted); font-style: italic; margin-left: auto; }
 .dl-panel-foot { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: space-between; align-items: center; background: var(--bg); flex-shrink: 0; }
 .dl-panel-foot .dl-foot-date { font-size: 11px; color: var(--muted); }
 .dl-panel-delete-btn { background: var(--red-bg); border: 1px solid #f5c6c0; color: var(--red); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
@@ -392,7 +406,16 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .modal-overlay.show { opacity: 1; pointer-events: all; }
 .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 420px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.18); transform: translateY(12px); transition: transform 0.2s; }
 .modal-overlay.show .modal { transform: translateY(0); }
-.modal-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; margin: 0; color: var(--text); }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 20px 14px; border-bottom: 1px solid var(--bg2); }
+.modal-close { background: var(--bg2); border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; color: var(--text2); cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+.modal-close:hover { background: var(--red-bg); color: var(--red); }
+.modal-body { padding: 18px 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px 18px; border-top: 1px solid var(--bg2); }
+.btn-cancel { background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
+.btn-cancel:hover { background: var(--border); }
+.btn-save { background: var(--gold); color: white; border: none; border-radius: 7px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
+.btn-save:hover { opacity: 0.9; }
 .modal-task { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
 .modal-sub { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 9px; }
 .snooze-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
@@ -789,6 +812,10 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .cl-section-head { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; background:var(--bg2); cursor:pointer; user-select:none; }
 .cl-section-icon { font-size:18px; }
 .cl-section-title { font-size:13px; font-weight:700; color:var(--text); flex:1; text-transform:uppercase; letter-spacing:.5px; }
+.cl-sec-btn { background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 2px 6px; font-size: 12px; cursor: pointer; opacity: 0; transition: all 0.15s; line-height: 1; }
+.cl-section-head:hover .cl-sec-btn { opacity: 0.7; }
+.cl-sec-btn:hover { opacity: 1 !important; background: var(--bg2); border-color: var(--border); }
+.cl-sec-btn-del:hover { background: var(--red-bg); border-color: #f0c8c0; }
 .cl-section-prog { font-size:11px; color:var(--muted); }
 .cl-section-toggle { font-size:12px; color:var(--muted); transition:transform .2s; }
 .cl-section-toggle.open { transform:rotate(180deg); }
@@ -1730,27 +1757,22 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 <!-- ADD SECTION MODAL (replaces the native prompt) -->
 <div class="modal-overlay" id="add-section-modal">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-header">
-      <h3 class="modal-title" id="add-section-modal-title">📋 Add New Section</h3>
-      <button class="modal-close" onclick="closeAddSectionModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="dl-form-row">
-        <div class="dl-form-field" style="flex:0 0 90px">
-          <label class="dl-form-label">Icon</label>
-          <input type="text" id="add-section-icon" class="dl-form-input" maxlength="2" value="📋" style="text-align:center;font-size:18px">
-        </div>
-        <div class="dl-form-field" style="flex:1">
-          <label class="dl-form-label">Section title</label>
-          <input type="text" id="add-section-title" class="dl-form-input" placeholder="e.g. VAT & Tax, Procurement, Payroll..." onkeydown="if(event.key==='Enter')saveAddSection();if(event.key==='Escape')closeAddSectionModal()">
-        </div>
+  <div class="modal">
+    <div class="modal-title" id="add-section-modal-title">📋 Add New Section</div>
+    <div class="modal-task">Pick an icon and give your new section a clear, short title (e.g. "VAT & Tax", "Bank Reconciliations").</div>
+    <div class="dl-form-row">
+      <div class="dl-form-field" style="flex:0 0 90px">
+        <label class="dl-form-label">Icon</label>
+        <input type="text" id="add-section-icon" class="dl-form-input" maxlength="2" value="📋" style="text-align:center;font-size:20px;padding:8px">
       </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--muted);font-style:italic">Tip: pick any single emoji as the icon. Press Enter to save.</div>
+      <div class="dl-form-field" style="flex:1">
+        <label class="dl-form-label">Section title</label>
+        <input type="text" id="add-section-title" class="dl-form-input" placeholder="e.g. VAT & Tax, Procurement, Payroll..." onkeydown="if(event.key==='Enter')saveAddSection();if(event.key==='Escape')closeAddSectionModal()">
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeAddSectionModal()">Cancel</button>
-      <button class="btn-save" onclick="saveAddSection()">+ Add Section</button>
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button onclick="closeAddSectionModal()" style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s">Cancel</button>
+      <button onclick="saveAddSection()" style="flex:2;background:var(--gold);color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s">+ Add Section</button>
     </div>
   </div>
 </div>
@@ -2114,14 +2136,46 @@ setInterval(async () => {
 // ════════════════════════════════════════
 function updateTagDropdown() {
   const sel = document.getElementById('drop-tag');
-  Array.from(sel.options).forEach(o => { if (o.dataset.custom) o.remove(); });
+  Array.from(sel.options).forEach(o => { if (o.dataset.custom || o.dataset.action) o.remove(); });
   customTags.forEach(ct => {
     const o = document.createElement('option');
     o.value = 'custom:' + ct;
-    o.textContent = ct;
+    o.textContent = ct.toUpperCase();
     o.dataset.custom = '1';
     sel.appendChild(o);
   });
+  // Inline "Add new tag" action
+  const addOpt = document.createElement('option');
+  addOpt.value = '__add__';
+  addOpt.textContent = '+ Add new tag…';
+  addOpt.dataset.action = '1';
+  addOpt.style.fontStyle = 'italic';
+  sel.appendChild(addOpt);
+  // Wire change handler if not already
+  if (!sel._addNewWired) {
+    sel.addEventListener('change', function() {
+      if (this.value === '__add__') {
+        const name = prompt('New tag name:');
+        if (name) {
+          const clean = name.trim().toLowerCase().replace(/[^a-z0-9 _-]/g,'');
+          if (clean && !customTags.includes(clean) && !['vat','finance','procurement','audit','general'].includes(clean)) {
+            customTags.push(clean);
+            saveData();
+            updateTagDropdown();
+            renderCustomTags();
+            // Auto-select the new tag
+            this.value = 'custom:' + clean;
+            showToast(`Tag "${clean}" added.`);
+            return;
+          }
+          showToast(clean ? 'Tag already exists.' : 'Invalid tag name.');
+        }
+        // Restore previous selection
+        this.value = 'general';
+      }
+    });
+    sel._addNewWired = true;
+  }
 }
 function renderCustomTags() {
   document.getElementById('custom-tag-list').innerHTML = customTags.map(ct => `
@@ -2266,6 +2320,14 @@ function moveTask(id, status) {
     saveData();
   }
   closeMenu();
+}
+function toggleTaskPin(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.pinned = !t.pinned;
+  logAudit('PIN_TASK', t.title, t.pinned ? 'pinned' : 'unpinned');
+  saveData();
+  showToast(t.pinned ? '📌 Pinned to top' : 'Unpinned');
 }
 function deleteTask(id) {
   const t = tasks.find(x=>x.id===id);
@@ -2465,6 +2527,8 @@ function renderCol(elId, list) {
   const q = document.getElementById('search').value.toLowerCase();
   let shown = q ? list.filter(t=>t.title.toLowerCase().includes(q)) : list;
   if (mgrFilterBoard) shown = shown.filter(t => t.discussWithMgr);
+  // Pinned tasks stick to top of column (To Do + Follow-Up columns)
+  shown = shown.slice().sort((a, b) => (b.pinned?1:0) - (a.pinned?1:0));
   if (!shown.length) {
     el.innerHTML = `<div class="empty"><div class="empty-ico">—</div><div class="empty-txt">No tasks</div></div>`;
     return 0;
@@ -2480,11 +2544,12 @@ function renderCol(elId, list) {
         <textarea class="mgr-note-area" placeholder="What to discuss..." onblur="updateTaskMgrNote('${t.id}',this.value)">${esc(t.mgrNotes||'')}</textarea>
       </div>` : '';
     return `
-      <div class="task-card ${t.status==='done'?'is-done':''} ${ds==='overdue'&&t.status!=='done'?'is-overdue':''} ${ds==='due-soon'&&t.status!=='done'?'is-due-soon':''} ${t.discussWithMgr?'has-mgr':''} ${selectedTaskIds.has(t.id)?'selected':''}" id="card-${t.id}">
+      <div class="task-card ${t.status==='done'?'is-done':''} ${ds==='overdue'&&t.status!=='done'?'is-overdue':''} ${ds==='due-soon'&&t.status!=='done'?'is-due-soon':''} ${t.discussWithMgr?'has-mgr':''} ${selectedTaskIds.has(t.id)?'selected':''} ${t.pinned?'is-pinned':''}" id="card-${t.id}">
         <div class="card-top">
           <div class="check-box ${t.status==='done'?'checked':''}" onclick="toggleCheck('${t.id}')"></div>
           <span class="task-title" onclick="openTaskPanel('${t.id}')" style="cursor:pointer" title="Click to open in panel">${esc(t.title)}</span>
           <div class="task-sel-cb ${selectedTaskIds.has(t.id)?'selected':''}" onclick="toggleTaskSelection('${t.id}', event)" title="Select to merge with other tasks"></div>
+          <button class="card-pin-btn ${t.pinned?'pinned':''}" onclick="toggleTaskPin('${t.id}')" title="${t.pinned?'Unpin':'Pin to top'}">📌</button>
           <button class="card-edit-btn" onclick="openTaskPanel('${t.id}')" title="Edit (quick)">✏️</button>
           <button class="card-menu-btn" onclick="openMenu('${t.id}',event)">⋯</button>
         </div>
@@ -5424,12 +5489,17 @@ function renderClPanel() {
       <label class="dl-panel-label">Remarks</label>
       <textarea class="dl-panel-textarea" id="clp-remarks" placeholder="e.g. waiting for approval, partially done because..." oninput="clPanelSaveField('remarks', this.value)">${esc(it.remarks||'')}</textarea>
     </div>
-    <div class="dl-panel-field dl-panel-mgr-box">
-      <input type="checkbox" id="clp-mgr" ${it.discussWithMgr ? 'checked' : ''} onchange="clPanelSaveField('discussWithMgr', this.checked, true)">
-      <div class="dl-panel-mgr-info">
-        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px">💬 Discuss with manager</div>
-        <input class="dl-panel-input" id="clp-mgr-note" type="text" placeholder="What to discuss with manager…" value="${esc(it.mgrNotes||'')}" style="margin-top:6px" oninput="clPanelSaveField('mgrNotes', this.value)">
-      </div>
+    <div class="dl-panel-field dl-panel-mgr-box ${it.discussWithMgr?'dl-panel-mgr-active':''}">
+      <input type="checkbox" id="clp-mgr" ${it.discussWithMgr ? 'checked' : ''} onchange="clPanelSaveField('discussWithMgr', this.checked, true);renderClPanel()">
+      ${it.discussWithMgr ? `
+        <div class="dl-panel-mgr-info">
+          <div class="dl-panel-mgr-label-compact">💬 DISCUSS WITH MANAGER</div>
+          <input class="dl-panel-input" id="clp-mgr-note" type="text" placeholder="What to discuss with manager…" value="${esc(it.mgrNotes||'')}" style="margin-top:5px" oninput="clPanelSaveField('mgrNotes', this.value)">
+        </div>
+      ` : `
+        <span class="dl-panel-mgr-label-compact">💬 Flag for manager discussion</span>
+        <span class="dl-panel-mgr-hint">→ shows in Sync with Manager tab</span>
+      `}
     </div>
     <div class="dl-panel-row">
       <div class="dl-panel-field">
@@ -5659,11 +5729,13 @@ function renderChecklist(type) {
     const secDone = sec.items.filter(it => it.status === 'completed').length;
     const secTotal = sec.items.length;
     html += `<div class="cl-section">
-      <div class="cl-section-head" onclick="toggleClSection('${type}','${sec.id}')">
-        <span class="cl-section-icon">${esc(sec.icon || '📋')}</span>
-        <span class="cl-section-title">${esc(sec.title)}</span>
+      <div class="cl-section-head">
+        <span class="cl-section-icon" onclick="toggleClSection('${type}','${sec.id}')" style="cursor:pointer">${esc(sec.icon || '📋')}</span>
+        <span class="cl-section-title" onclick="toggleClSection('${type}','${sec.id}')" style="cursor:pointer">${esc(sec.title)}</span>
         <span class="cl-section-prog">${secDone}/${secTotal}</span>
-        <span class="cl-section-toggle ${!sec.collapsed ? 'open' : ''}">▼</span>
+        <button class="cl-sec-btn" onclick="event.stopPropagation();renameClSection('${type}','${sec.id}')" title="Rename / change icon">✏️</button>
+        <button class="cl-sec-btn cl-sec-btn-del" onclick="event.stopPropagation();deleteClSection('${type}','${sec.id}')" title="Delete section">🗑</button>
+        <span class="cl-section-toggle ${!sec.collapsed ? 'open' : ''}" onclick="toggleClSection('${type}','${sec.id}')" style="cursor:pointer">▼</span>
       </div>`;
 
     if (!sec.collapsed) {
@@ -5738,19 +5810,67 @@ function addClSection(type) {
 function closeAddSectionModal() {
   document.getElementById('add-section-modal').classList.remove('show');
   addSectionType = null;
+  editingSectionId = null;
 }
 function saveAddSection() {
   const title = document.getElementById('add-section-title').value.trim();
   const icon = (document.getElementById('add-section-icon').value || '📋').trim() || '📋';
   if (!title) { showToast('Section title cannot be empty.'); return; }
   const list = getClList(addSectionType);
-  list.push({ id: uid(), title, icon, collapsed: false, items: [] });
-  logAudit('ADD_SECTION', title, 'type=' + addSectionType);
+  if (editingSectionId) {
+    // RENAME mode
+    const sec = list.find(s => s.id === editingSectionId);
+    if (!sec) { closeAddSectionModal(); return; }
+    sec.title = title;
+    sec.icon = icon;
+    logAudit('RENAME_SECTION', title, 'type=' + addSectionType);
+    saveCl();
+    const type = addSectionType;
+    closeAddSectionModal();
+    renderChecklist(type);
+    showToast(`✓ Section renamed to ${icon} ${title}`);
+  } else {
+    // ADD mode
+    list.push({ id: uid(), title, icon, collapsed: false, items: [] });
+    logAudit('ADD_SECTION', title, 'type=' + addSectionType);
+    saveCl();
+    const type = addSectionType;
+    closeAddSectionModal();
+    renderChecklist(type);
+    showToast(`✓ Added section: ${icon} ${title}`);
+  }
+}
+
+let editingSectionId = null;
+function renameClSection(type, secId) {
+  const list = getClList(type);
+  const sec = list.find(s => s.id === secId);
+  if (!sec) return;
+  addSectionType = type;
+  editingSectionId = secId;
+  document.getElementById('add-section-modal-title').textContent = '✏️ Rename Section';
+  document.getElementById('add-section-title').value = sec.title;
+  document.getElementById('add-section-icon').value = sec.icon || '📋';
+  document.getElementById('add-section-modal').classList.add('show');
+  setTimeout(() => document.getElementById('add-section-title').focus(), 60);
+}
+
+function deleteClSection(type, secId) {
+  const list = getClList(type);
+  const sec = list.find(s => s.id === secId);
+  if (!sec) return;
+  const itemCount = sec.items.length;
+  if (itemCount > 0) {
+    if (!confirm(`Section "${sec.title}" contains ${itemCount} item${itemCount===1?'':'s'}. Delete section AND all its items? This cannot be undone.`)) return;
+  } else {
+    if (!confirm(`Delete section "${sec.title}"?`)) return;
+  }
+  const idx = list.findIndex(s => s.id === secId);
+  if (idx !== -1) list.splice(idx, 1);
+  logAudit('DELETE_SECTION', sec.title, 'type=' + type + ' items=' + itemCount);
   saveCl();
-  const type = addSectionType;
-  closeAddSectionModal();
   renderChecklist(type);
-  showToast(`✓ Added section: ${icon} ${title}`);
+  showToast(`Section "${sec.title}" deleted.`);
 }
 
 function addClItem(type, secId) {
@@ -6471,7 +6591,7 @@ function showTaskPanelSaved() {
 function taskPanelSaveField(field, value, immediate) {
   const t = tasks.find(x => x.id === taskPanelId);
   if (!t) return;
-  if (field === 'discussWithMgr') t[field] = !!value;
+  if (field === 'discussWithMgr' || field === 'pinned') t[field] = !!value;
   else t[field] = value;
   showTaskPanelSaving();
   clearTimeout(taskPanelSaveTimers[field]);
@@ -6480,7 +6600,9 @@ function taskPanelSaveField(field, value, immediate) {
     showTaskPanelSaved();
     delete taskPanelSaveTimers[field];
     // Re-render board for status/title/tag/priority/deadline/assigned changes
-    if (['status','title','tag','priority','deadline','assignedTo','discussWithMgr'].includes(field)) render();
+    if (['status','title','tag','priority','deadline','assignedTo','discussWithMgr','pinned'].includes(field)) render();
+    // Re-render panel itself if status changed (so Assigned-to field shows/hides correctly)
+    if (field === 'status') renderTaskPanel();
   }, immediate ? 0 : 700);
 }
 
@@ -6550,16 +6672,23 @@ function renderTaskPanel() {
         <input class="dl-panel-input" type="date" value="${esc(t.deadline||'')}" oninput="taskPanelSaveField('deadline', this.value)">
       </div>
     </div>
-    <div class="dl-panel-field" ${isFollowup?'':'style="opacity:0.6"'}>
+    ${(t.status === 'followup' || t.assignedTo) ? `
+    <div class="dl-panel-field">
       <label class="dl-panel-label">Assigned to <span class="field-info"><span class="field-info-icon">i</span><span class="field-info-tip">The person you're following up with. Only relevant when status is Follow-Up — the name shows as a 👤 badge on the card.</span></span></label>
       <input class="dl-panel-input" type="text" placeholder="e.g. Azeem, Laura, Jitka…" value="${esc(t.assignedTo||'')}" oninput="taskPanelSaveField('assignedTo', this.value)">
     </div>
-    <div class="dl-panel-field dl-panel-mgr-box">
-      <input type="checkbox" id="taskp-mgr" ${t.discussWithMgr?'checked':''} onchange="taskPanelSaveField('discussWithMgr', this.checked, true)">
-      <div class="dl-panel-mgr-info">
-        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px">💬 Discuss with manager</div>
-        <input class="dl-panel-input" type="text" placeholder="What to discuss with manager…" value="${esc(t.mgrNotes||'')}" style="margin-top:6px" oninput="taskPanelSaveField('mgrNotes', this.value)">
-      </div>
+    ` : ''}
+    <div class="dl-panel-field dl-panel-mgr-box ${t.discussWithMgr?'dl-panel-mgr-active':''}">
+      <input type="checkbox" id="taskp-mgr" ${t.discussWithMgr?'checked':''} onchange="taskPanelSaveField('discussWithMgr', this.checked, true);renderTaskPanel()">
+      ${t.discussWithMgr ? `
+        <div class="dl-panel-mgr-info">
+          <div class="dl-panel-mgr-label-compact">💬 DISCUSS WITH MANAGER</div>
+          <input class="dl-panel-input" type="text" placeholder="What to discuss with manager…" value="${esc(t.mgrNotes||'')}" style="margin-top:5px" oninput="taskPanelSaveField('mgrNotes', this.value)">
+        </div>
+      ` : `
+        <span class="dl-panel-mgr-label-compact">💬 Flag for manager discussion</span>
+        <span class="dl-panel-mgr-hint">→ shows in Sync with Manager tab</span>
+      `}
     </div>
     <div class="dl-panel-section">
       <div class="dl-panel-section-title">📝 Notes</div>
