@@ -4992,17 +4992,18 @@ function migrateClPeriods(type) {
 
 // Auto-roll: when a recurring item is completed, create next-period instance (if doesn't exist already)
 function autoRollIfNeeded(type, secId, item) {
-  if (!item.repeat || item.repeat === 'none') return;
-  if (!item.autoRoll) return;
+  if (!item.repeat || item.repeat === 'none') return false;
+  if (!item.autoRoll) return false;
+  if (item.rolledForward) return false; // already rolled — don't re-create even if next instance was deleted
   const list = getClList(type);
   const sec = list.find(s => s.id === secId);
-  if (!sec) return;
+  if (!sec) return false;
   const tmplId = item.templateId || item.id;
   if (!item.templateId) item.templateId = tmplId; // backfill so future instances are linked
   const nextPer = nextPeriodOf(type, item.period || getCurrentPeriod(type));
   // Skip if next-period instance already exists for this template
   const exists = (sec.items || []).some(i => (i.templateId === tmplId || i.id === tmplId) && i.period === nextPer);
-  if (exists) return;
+  if (exists) { item.rolledForward = true; return false; }
   // Clone for next period
   sec.items.push({
     id: uid(),
@@ -5019,7 +5020,24 @@ function autoRollIfNeeded(type, secId, item) {
     period: nextPer,
     expanded: false
   });
+  item.rolledForward = true;
   showToast(`✓ Next-period item auto-created for ${formatPeriodLabel(type, nextPer)}`);
+  return true;
+}
+
+// Backfill: process any already-completed recurring auto-roll items that haven't rolled yet
+function backfillAutoRolled(type) {
+  const list = getClList(type);
+  let changed = false;
+  list.forEach(sec => {
+    const snapshot = sec.items.slice(); // freeze list before iterating; pushes happen during loop
+    snapshot.forEach(it => {
+      if (it.status === 'completed' && it.repeat && it.repeat !== 'none' && it.autoRoll && !it.rolledForward) {
+        if (autoRollIfNeeded(type, sec.id, it)) changed = true;
+      }
+    });
+  });
+  return changed;
 }
 
 const DEFAULT_SECTIONS_ME = [
@@ -5272,7 +5290,23 @@ function clPanelSaveField(field, value, immediate) {
 }
 
 function clPanelChangeStatus(newStatus) {
+  // Capture old status BEFORE updating (so we can detect transition to completed)
+  const list = getClList(clPanelType);
+  const sec = list.find(s => s.id === clPanelSecId);
+  if (!sec) return;
+  const it = sec.items.find(i => i.id === clPanelItemId);
+  if (!it) return;
+  const oldStatus = it.status;
+  // Save status via the normal field-save flow (handles the indicator + cloud push)
   clPanelSaveField('status', newStatus, true);
+  // If transitioning to completed AND this is a recurring auto-roll item, create the next instance
+  if (oldStatus !== 'completed' && newStatus === 'completed') {
+    const rolled = autoRollIfNeeded(clPanelType, clPanelSecId, it);
+    if (rolled) {
+      saveCl(); pushToCloud();
+      renderChecklist(clPanelType);
+    }
+  }
   // Re-render panel so the status pill colour updates
   renderClPanel();
 }
@@ -5446,6 +5480,8 @@ function renderChecklist(type) {
 
   // Backfill periods on any items that don't have one (one-time migration on load)
   if (migrateClPeriods(type)) saveCl();
+  // Backfill auto-roll: any completed+recurring+autoRoll item that hasn't rolled yet → create next-period copy
+  if (backfillAutoRolled(type)) { saveCl(); pushToCloud(); }
 
   // Period label (now showing the selected period — navigable)
   const curPeriod = getCurrentPeriod(type);
