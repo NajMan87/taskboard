@@ -27,7 +27,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { font-size: 15px; }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 62px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
 .logo { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; flex-shrink: 0; }
@@ -337,6 +337,13 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 /* ═══ ME/YE Kanban Board view ═══ */
 .cl-board-view { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.cl-board-quickadd { display: flex; align-items: center; gap: 8px; background: var(--bg2); border: 1px dashed var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.cl-board-quickadd-label { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.cl-board-quickadd-sec { padding: 6px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; outline: none; min-width: 160px; }
+.cl-board-quickadd-input { flex: 1; min-width: 180px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; }
+.cl-board-quickadd-input:focus { border-color: var(--gold); }
+.cl-board-quickadd-btn { background: var(--gold); color: white; border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
+.cl-board-quickadd-btn:hover { opacity: 0.9; }
 @media (max-width: 1024px) { .cl-board-view { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .cl-board-view { grid-template-columns: 1fr; } }
 .cl-board-col { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 220px; }
@@ -755,6 +762,9 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .field-info-icon:hover { background: var(--gold); color: white; }
 .field-info-tip { position: absolute; bottom: calc(100% + 6px); left: -7px; transform: none; background: var(--text); color: var(--surface); padding: 7px 11px; border-radius: 6px; font-size: 11px; font-weight: 400; line-height: 1.5; white-space: normal; width: max-content; max-width: 240px; box-shadow: 0 4px 14px rgba(0,0,0,0.22); z-index: 250; opacity: 0; pointer-events: none; transition: opacity 0.15s; text-transform: none; letter-spacing: 0; }
 .field-info-tip::after { content: ''; position: absolute; top: 100%; left: 13px; transform: none; border: 5px solid transparent; border-top-color: var(--text); }
+/* Right-anchored variant for icons near the right edge of the panel (no horizontal overflow) */
+.field-info-right .field-info-tip { left: auto; right: -7px; }
+.field-info-right .field-info-tip::after { left: auto; right: 13px; }
 .field-info:hover .field-info-tip { opacity: 1; }
 .cl-actions { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
 .cl-btn { padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s; display:flex; align-items:center; gap:6px; }
@@ -1716,6 +1726,33 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <button class="dl-panel-close" onclick="closeLessonPanel()" title="Close (Esc)">×</button>
   </div>
   <div class="dl-panel-body" id="ll-panel-body"></div>
+</div>
+
+<!-- ADD SECTION MODAL (replaces the native prompt) -->
+<div class="modal-overlay" id="add-section-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="add-section-modal-title">📋 Add New Section</h3>
+      <button class="modal-close" onclick="closeAddSectionModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="dl-form-row">
+        <div class="dl-form-field" style="flex:0 0 90px">
+          <label class="dl-form-label">Icon</label>
+          <input type="text" id="add-section-icon" class="dl-form-input" maxlength="2" value="📋" style="text-align:center;font-size:18px">
+        </div>
+        <div class="dl-form-field" style="flex:1">
+          <label class="dl-form-label">Section title</label>
+          <input type="text" id="add-section-title" class="dl-form-input" placeholder="e.g. VAT & Tax, Procurement, Payroll..." onkeydown="if(event.key==='Enter')saveAddSection();if(event.key==='Escape')closeAddSectionModal()">
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);font-style:italic">Tip: pick any single emoji as the icon. Press Enter to save.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAddSectionModal()">Cancel</button>
+      <button class="btn-save" onclick="saveAddSection()">+ Add Section</button>
+    </div>
+  </div>
 </div>
 
 <!-- TASK SIDE PANEL (full editor with rich text notes) -->
@@ -5403,7 +5440,7 @@ function renderClPanel() {
         </select>
       </div>
       <div class="dl-panel-field">
-        <label class="dl-panel-label">Period <span class="field-info"><span class="field-info-icon">i</span><span class="field-info-tip">Change this value to move the item to a different ${clPanelType==='ye'?'year':'month'}. The view will jump to where the item ends up.</span></span></label>
+        <label class="dl-panel-label">Period <span class="field-info field-info-right"><span class="field-info-icon">i</span><span class="field-info-tip">Change this value to move the item to a different ${clPanelType==='ye'?'year':'month'}. The view will jump to where the item ends up.</span></span></label>
         ${clPanelType === 'ye'
           ? `<input class="dl-panel-input" type="number" min="2000" max="2099" step="1" value="${esc(it.period||getCurrentPeriod(clPanelType))}" onchange="clPanelChangePeriod(this.value)" title="Year this item belongs to (YYYY)">`
           : `<input class="dl-panel-input" type="month" value="${esc(it.period||getCurrentPeriod(clPanelType))}" onchange="clPanelChangePeriod(this.value)" title="Month this item belongs to">`}
@@ -5571,7 +5608,20 @@ function renderChecklist(type) {
       { key: 'ongoing',     label: '↻ Ongoing' },
       { key: 'completed',   label: '✓ Completed' }
     ];
-    let bhtml = '<div class="cl-board-view">';
+    // Quick-add bar above the board so user can add an item to any section without leaving Board view
+    let bhtml = '';
+    if (list.length) {
+      bhtml += `
+        <div class="cl-board-quickadd">
+          <span class="cl-board-quickadd-label">⊕ Quick add to</span>
+          <select class="cl-board-quickadd-sec" id="${type}-board-add-sec">
+            ${list.map(s => `<option value="${s.id}">${esc(s.icon||'📋')} ${esc(s.title)}</option>`).join('')}
+          </select>
+          <input class="cl-board-quickadd-input" id="${type}-board-add-input" placeholder="Type item description and press Enter…" onkeydown="if(event.key==='Enter')boardQuickAddCl('${type}')">
+          <button class="cl-board-quickadd-btn" onclick="boardQuickAddCl('${type}')">Add</button>
+        </div>`;
+    }
+    bhtml += '<div class="cl-board-view">';
     statuses.forEach(s => {
       const items = [];
       list.forEach(sec => {
@@ -5676,14 +5726,31 @@ function renderChecklist(type) {
   wrap.innerHTML = html;
 }
 
+let addSectionType = null;
 function addClSection(type) {
-  const title = prompt('Section title:');
-  if (!title) return;
-  const list = getClList(type);
-  list.push({ id: uid(), title: title.trim(), icon: '📋', collapsed: false, items: [] });
-  logAudit('ADD_SECTION', title, 'type=' + type);
+  addSectionType = type;
+  document.getElementById('add-section-modal-title').textContent = type === 'ye' ? '📆 Add New Year-End Section' : '📋 Add New Month-End Section';
+  document.getElementById('add-section-title').value = '';
+  document.getElementById('add-section-icon').value = '📋';
+  document.getElementById('add-section-modal').classList.add('show');
+  setTimeout(() => document.getElementById('add-section-title').focus(), 60);
+}
+function closeAddSectionModal() {
+  document.getElementById('add-section-modal').classList.remove('show');
+  addSectionType = null;
+}
+function saveAddSection() {
+  const title = document.getElementById('add-section-title').value.trim();
+  const icon = (document.getElementById('add-section-icon').value || '📋').trim() || '📋';
+  if (!title) { showToast('Section title cannot be empty.'); return; }
+  const list = getClList(addSectionType);
+  list.push({ id: uid(), title, icon, collapsed: false, items: [] });
+  logAudit('ADD_SECTION', title, 'type=' + addSectionType);
   saveCl();
+  const type = addSectionType;
+  closeAddSectionModal();
   renderChecklist(type);
+  showToast(`✓ Added section: ${icon} ${title}`);
 }
 
 function addClItem(type, secId) {
@@ -5708,6 +5775,31 @@ function addClItem(type, secId) {
   logAudit('ADD_CHECKLIST_ITEM', text, 'type=' + type + ' section=' + sec.title + ' period=' + getCurrentPeriod(type));
   saveCl();
   renderChecklist(type);
+}
+
+// Board-view quick add: read input + section dropdown, then add via the normal addClItem flow
+function boardQuickAddCl(type) {
+  const secId = document.getElementById(type + '-board-add-sec')?.value;
+  const inputEl = document.getElementById(type + '-board-add-input');
+  const text = (inputEl?.value || '').trim();
+  if (!secId || !text) { showToast('Pick a section and type something.'); return; }
+  const list = getClList(type);
+  const sec = list.find(s => s.id === secId);
+  if (!sec) return;
+  sec.items.push({
+    id: uid(), text,
+    status: 'not_started', assigned: '', remarks: '', remarksDate: '',
+    discussWithMgr: false, mgrNotes: '', expanded: false,
+    period: getCurrentPeriod(type),
+    repeat: 'none', autoRoll: false
+  });
+  logAudit('ADD_CHECKLIST_ITEM', text, 'type=' + type + ' section=' + sec.title + ' (board quickadd)');
+  inputEl.value = '';
+  saveCl();
+  renderChecklist(type);
+  showToast(`✓ Added to ${sec.title}`);
+  // Re-focus input so user can keep typing more items quickly
+  setTimeout(() => document.getElementById(type + '-board-add-input')?.focus(), 50);
 }
 
 function toggleClSection(type, secId) {
