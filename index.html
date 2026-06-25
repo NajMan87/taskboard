@@ -1020,6 +1020,24 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
     <div class="hdr-div"></div>
     <button class="hdr-btn" onclick="emailSummary()">📧 <span>Weekly Summary</span></button>
     <button class="hdr-btn green" onclick="exportExcel()">📥 <span>Export Excel</span></button>
+    <span id="folder-indicator" style="display:none;background:#fff3d6;border:1px solid #f0d898;color:#8a6b1f;padding:5px 11px;border-radius:14px;font-size:11px;font-weight:600;align-items:center;gap:4px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="syncFolderNow()" title="Click to save to folder now"></span>
+    <div class="hdr-backup-wrap" style="position:relative;display:inline-block">
+      <button class="hdr-btn" id="hdr-backup-btn" onclick="toggleBackupMenu(event)">💾 <span>Backup</span> <span style="font-size:10px">▾</span></button>
+      <div class="hdr-backup-menu" id="hdr-backup-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.18);padding:6px;z-index:200;min-width:240px">
+        <div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;padding:6px 10px 4px">Folder (auto-save)</div>
+        <button class="ctx-item" style="width:100%;text-align:left" id="folder-connect-btn" onclick="connectDataFolder();closeBackupMenu()">📁 Connect to a folder…</button>
+        <button class="ctx-item" style="width:100%;text-align:left;display:none" id="folder-sync-btn" onclick="syncFolderNow();closeBackupMenu()">💾 Save to folder now</button>
+        <button class="ctx-item" style="width:100%;text-align:left;display:none" id="folder-disconnect-btn" onclick="disconnectDataFolder();closeBackupMenu()">❌ Disconnect folder</button>
+        <div style="height:1px;background:var(--border);margin:4px 2px"></div>
+        <div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;padding:6px 10px 4px">Manual backup</div>
+        <button class="ctx-item" style="width:100%;text-align:left" onclick="exportJsonBackup();closeBackupMenu()">📤 Export JSON to file</button>
+        <button class="ctx-item" style="width:100%;text-align:left" onclick="document.getElementById('json-import-input').click();closeBackupMenu()">📥 Import JSON from file</button>
+        <div style="height:1px;background:var(--border);margin:4px 2px"></div>
+        <button class="ctx-item" style="width:100%;text-align:left" onclick="copyJsonToClipboard();closeBackupMenu()">📋 Copy data to clipboard</button>
+        <button class="ctx-item" style="width:100%;text-align:left" onclick="pasteJsonFromClipboard();closeBackupMenu()">📋 Paste data from clipboard</button>
+      </div>
+      <input type="file" id="json-import-input" accept=".json,application/json" style="display:none" onchange="importJsonBackup(event)">
+    </div>
   </div>
 </header>
 
@@ -1909,7 +1927,7 @@ function applyAllData(d) {
   if (Array.isArray(d.lessons)) lessons = d.lessons;
   if (Array.isArray(d.auditTrail)) auditTrail = d.auditTrail;
 }
-function saveLocal() { localStorage.setItem('naj_all_data_v3', JSON.stringify(getAllData())); }
+function saveLocal() { localStorage.setItem('naj_all_data_v3', JSON.stringify(getAllData())); if (typeof scheduleFolderAutoSave === 'function') scheduleFolderAutoSave(); }
 function loadLocal() {
   const raw = localStorage.getItem('naj_all_data_v3');
   if (raw) { try { applyAllData(JSON.parse(raw)); return true; } catch(e){} }
@@ -5291,6 +5309,7 @@ function loadClLocal() {
 }
 async function saveCl() {
   saveClLocal();
+  if (typeof scheduleFolderAutoSave === 'function') scheduleFolderAutoSave();
   await pushToCloud();
 }
 
@@ -6983,6 +7002,459 @@ function renderAuditTrail() {
   }).join('');
 }
 
+// ════════════════════════════════════════
+// 📁 FOLDER STORAGE — File System Access API (auto-save to a real folder on disk)
+// ════════════════════════════════════════
+let folderHandle = null;
+let folderAutoSaveTimer = null;
+let folderLastSavedAt = null;       // ms timestamp of last successful save
+let folderBadgeTimer = null;        // refresh every 10s
+const FS_DB_NAME = 'naj_fs';
+const FS_STORE = 'handles';
+const FS_HANDLE_KEY = 'data_folder';
+
+function openFsDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(FS_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(FS_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveFolderHandleToDb(handle) {
+  const db = await openFsDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FS_STORE, 'readwrite');
+    tx.objectStore(FS_STORE).put(handle, FS_HANDLE_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function loadFolderHandleFromDb() {
+  try {
+    const db = await openFsDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FS_STORE, 'readonly');
+      const req = tx.objectStore(FS_STORE).get(FS_HANDLE_KEY);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) { return null; }
+}
+async function clearFolderHandleFromDb() {
+  const db = await openFsDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FS_STORE, 'readwrite');
+    tx.objectStore(FS_STORE).delete(FS_HANDLE_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function connectDataFolder() {
+  if (!window.showDirectoryPicker) {
+    showToast('❌ Folder access needs Chrome 86+ or Edge 86+. Use Export/Import instead.');
+    return;
+  }
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'taskboard-data', startIn: 'desktop' });
+    const perm = await handle.requestPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') { showToast('Permission denied.'); return; }
+    folderHandle = handle;
+    await saveFolderHandleToDb(handle);
+    updateFolderIndicator();
+    // Check for existing file in this folder
+    try {
+      const fileHandle = await handle.getFileHandle('taskboard-data.json', { create: false });
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const counts = `${(data.tasks||[]).length} tasks · ${(data.deadlines||[]).length} deadlines`;
+      if (confirm(`Found taskboard-data.json in this folder (${counts}).\n\nLoad data FROM the folder file?\n(OK = load from folder, Cancel = keep current data and overwrite folder)`)) {
+        applyBackupBlobSilent(data);
+        showToast(`✓ Loaded from folder: ${handle.name}`);
+      } else {
+        await saveToConnectedFolder();
+        showToast(`✓ Current data saved to folder: ${handle.name}`);
+      }
+    } catch (e) {
+      // No file yet — create it with current data
+      await saveToConnectedFolder();
+      showToast(`✓ Connected to folder: ${handle.name}`);
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return; // user cancelled
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function disconnectDataFolder() {
+  if (!confirm('Disconnect from folder?\n\nYour data stays in the folder file AND in browser storage. Auto-save just stops.')) return;
+  folderHandle = null;
+  await clearFolderHandleFromDb();
+  updateFolderIndicator();
+  showToast('📁 Folder disconnected.');
+}
+
+async function saveToConnectedFolder() {
+  if (!folderHandle) return false;
+  try {
+    const perm = await folderHandle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') {
+      const re = await folderHandle.requestPermission({ mode: 'readwrite' });
+      if (re !== 'granted') return false;
+    }
+    const fileHandle = await folderHandle.getFileHandle('taskboard-data.json', { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(buildBackupBlob(), null, 2));
+    await writable.close();
+    folderLastSavedAt = Date.now();
+    renderFolderBadge();
+    // Schedule a daily snapshot to the Backups/ subfolder (max 1 per day)
+    saveDailySnapshot().catch(e => console.error('Snapshot error:', e));
+    return true;
+  } catch (e) {
+    console.error('Folder save error:', e);
+    return false;
+  }
+}
+
+// Save once-per-day snapshot to Backups/ subfolder; auto-prune older than 7 days
+async function saveDailySnapshot() {
+  if (!folderHandle) return;
+  const today = new Date();
+  const stamp = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  const snapshotName = `taskboard-data-${stamp}.json`;
+  // Read last-snapshot record from localStorage so we only write once per day
+  const lastSnapKey = 'naj_last_snap_date';
+  if (localStorage.getItem(lastSnapKey) === stamp) return;
+  try {
+    const backupDir = await folderHandle.getDirectoryHandle('Backups', { create: true });
+    // Write today's snapshot
+    const fh = await backupDir.getFileHandle(snapshotName, { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(buildBackupBlob(), null, 2));
+    await w.close();
+    localStorage.setItem(lastSnapKey, stamp);
+    // Prune old snapshots — keep last 7
+    const files = [];
+    for await (const [name, h] of backupDir.entries()) {
+      if (h.kind === 'file' && /^taskboard-data-\d{4}-\d{2}-\d{2}\.json$/.test(name)) {
+        files.push({ name, date: name.replace('taskboard-data-','').replace('.json','') });
+      }
+    }
+    files.sort((a, b) => b.date.localeCompare(a.date)); // newest first
+    for (let i = 7; i < files.length; i++) {
+      try { await backupDir.removeEntry(files[i].name); } catch (e) {}
+    }
+  } catch (e) { console.error('Snapshot subfolder error:', e); }
+}
+
+// Render the folder badge with "saved Xs ago" relative time
+function renderFolderBadge() {
+  const el = document.getElementById('folder-indicator');
+  if (!el || !folderHandle) return;
+  const folderName = folderHandle.name;
+  let relative = '';
+  if (folderLastSavedAt) {
+    const ago = Math.round((Date.now() - folderLastSavedAt) / 1000);
+    if (ago < 5) relative = ' · saved just now';
+    else if (ago < 60) relative = ` · saved ${ago}s ago`;
+    else if (ago < 3600) relative = ` · saved ${Math.round(ago/60)}m ago`;
+    else relative = ` · saved ${Math.round(ago/3600)}h ago`;
+  }
+  el.textContent = '📁 ' + folderName + relative;
+  el.style.background = '#fff3d6';
+  el.style.borderColor = '#f0d898';
+  el.style.color = '#8a6b1f';
+  // Set up auto-refresh
+  if (!folderBadgeTimer) {
+    folderBadgeTimer = setInterval(() => { if (folderHandle && folderLastSavedAt) renderFolderBadge(); }, 10000);
+  }
+}
+
+async function syncFolderNow() {
+  if (!folderHandle) { showToast('No folder connected. Use Backup ▾ → Connect to a folder.'); return; }
+  const ok = await saveToConnectedFolder();
+  showToast(ok ? `✓ Saved to ${folderHandle.name}` : '❌ Save failed (check folder permissions).');
+}
+
+function scheduleFolderAutoSave() {
+  if (!folderHandle) return;
+  clearTimeout(folderAutoSaveTimer);
+  folderAutoSaveTimer = setTimeout(() => saveToConnectedFolder(), 1200);
+}
+
+// Same as applyBackupBlob but no confirm prompt (used internally)
+function applyBackupBlobSilent(data) {
+  if (!data || typeof data !== 'object') return;
+  if (Array.isArray(data.tasks)) tasks = data.tasks;
+  if (Array.isArray(data.customTags)) customTags = data.customTags;
+  if (Array.isArray(data.deadlines)) deadlines = data.deadlines;
+  if (Array.isArray(data.refCards)) refCards = data.refCards;
+  if (Array.isArray(data.contacts)) contacts = data.contacts;
+  if (Array.isArray(data.lessons)) lessons = data.lessons;
+  if (Array.isArray(data.auditTrail)) auditTrail = data.auditTrail;
+  if (Array.isArray(data.meChecklist)) meChecklist = data.meChecklist;
+  if (Array.isArray(data.yeChecklist)) yeChecklist = data.yeChecklist;
+  if (Array.isArray(data.meHistory)) meHistory = data.meHistory;
+  if (Array.isArray(data.yeHistory)) yeHistory = data.yeHistory;
+  if (Array.isArray(data.bankAccounts)) bankAccounts = data.bankAccounts;
+  saveLocal(); saveCl();
+  if (typeof render === 'function') render();
+  if (typeof renderDeadlines === 'function') renderDeadlines();
+  if (typeof renderChecklist === 'function') { renderChecklist('me'); renderChecklist('ye'); }
+  if (typeof renderReference === 'function') renderReference();
+  if (typeof renderContacts === 'function') renderContacts();
+  if (typeof renderLessons === 'function') renderLessons();
+}
+
+async function initFolderConnection() {
+  if (!window.showDirectoryPicker) return; // unsupported browser
+  const handle = await loadFolderHandleFromDb();
+  if (!handle) return;
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      folderHandle = handle;
+      updateFolderIndicator();
+      // Try to load latest from folder (this is the source of truth when connected)
+      try {
+        const fileHandle = await handle.getFileHandle('taskboard-data.json', { create: false });
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        applyBackupBlobSilent(JSON.parse(text));
+        console.log('Loaded data from folder:', handle.name);
+      } catch (e) { /* no file yet, that's OK */ }
+    } else {
+      // Permission needs re-grant — keep handle but show "click to enable"
+      folderHandle = handle;
+      updateFolderIndicator(true);
+    }
+  } catch (e) { console.error('Folder init error:', e); }
+}
+
+function updateFolderIndicator(needsPermission) {
+  const el = document.getElementById('folder-indicator');
+  const connectBtn = document.getElementById('folder-connect-btn');
+  const syncBtn = document.getElementById('folder-sync-btn');
+  const disconnectBtn = document.getElementById('folder-disconnect-btn');
+  const syncPill = document.getElementById('sync-pill');
+  if (!el) return;
+  if (folderHandle) {
+    el.style.display = 'inline-flex';
+    if (needsPermission) {
+      el.textContent = '📁 ⚠ Click to enable: ' + folderHandle.name;
+      el.style.background = '#ffe4d6';
+      el.style.borderColor = '#f0c8a8';
+      el.style.color = '#8a4a1f';
+      el.onclick = async () => {
+        const re = await folderHandle.requestPermission({ mode: 'readwrite' });
+        if (re === 'granted') { updateFolderIndicator(false); showToast('✓ Folder permission re-enabled.'); await saveToConnectedFolder(); }
+      };
+    } else {
+      renderFolderBadge();
+      el.onclick = () => syncFolderNow();
+    }
+    if (connectBtn) connectBtn.style.display = 'none';
+    if (syncBtn) syncBtn.style.display = 'block';
+    if (disconnectBtn) disconnectBtn.style.display = 'block';
+    // Hide the Drive sign-in pill when folder mode is the source of truth (unless user is actually signed in)
+    if (syncPill && !localStorage.getItem('naj_gd_token')) syncPill.style.display = 'none';
+  } else {
+    el.style.display = 'none';
+    if (connectBtn) connectBtn.style.display = 'block';
+    if (syncBtn) syncBtn.style.display = 'none';
+    if (disconnectBtn) disconnectBtn.style.display = 'none';
+    if (syncPill) syncPill.style.display = '';
+  }
+}
+
+// ════════════════════════════════════════
+// 🎯 DRAG & DROP JSON IMPORT
+// ════════════════════════════════════════
+let dropOverlay = null;
+function ensureDropOverlay() {
+  if (dropOverlay) return dropOverlay;
+  dropOverlay = document.createElement('div');
+  dropOverlay.id = 'drop-overlay';
+  dropOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(193,127,42,0.18);border:4px dashed var(--gold);z-index:9999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);font-family:DM Sans,sans-serif;pointer-events:none;';
+  dropOverlay.innerHTML = '<div style="background:var(--surface);padding:30px 50px;border-radius:14px;border:2px solid var(--gold);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25)"><div style="font-size:48px;margin-bottom:10px">📥</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px">Drop your JSON backup here</div><div style="font-size:12px;color:var(--muted)">Will replace current data (confirmation required)</div></div>';
+  document.body.appendChild(dropOverlay);
+  return dropOverlay;
+}
+let dropDragCounter = 0;
+document.addEventListener('dragenter', (e) => {
+  if (!e.dataTransfer || !e.dataTransfer.types) return;
+  if (!Array.from(e.dataTransfer.types).includes('Files')) return;
+  dropDragCounter++;
+  e.preventDefault();
+  ensureDropOverlay().style.display = 'flex';
+});
+document.addEventListener('dragleave', (e) => {
+  if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
+  dropDragCounter--;
+  if (dropDragCounter <= 0) {
+    dropDragCounter = 0;
+    if (dropOverlay) dropOverlay.style.display = 'none';
+  }
+});
+document.addEventListener('dragover', (e) => {
+  if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault();
+});
+document.addEventListener('drop', (e) => {
+  if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
+  e.preventDefault();
+  dropDragCounter = 0;
+  if (dropOverlay) dropOverlay.style.display = 'none';
+  const files = Array.from(e.dataTransfer.files);
+  const jsonFile = files.find(f => f.name.toLowerCase().endsWith('.json') || f.type === 'application/json');
+  if (!jsonFile) { showToast('Drop a .json file to import.'); return; }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      applyBackupBlob(data, jsonFile.name);
+    } catch (err) { showToast('❌ Invalid JSON: ' + err.message); }
+  };
+  reader.onerror = () => showToast('❌ Could not read the dropped file.');
+  reader.readAsText(jsonFile);
+});
+
+// ════════════════════════════════════════
+// 💾 JSON BACKUP — for offline/cross-device sync via OneDrive, email, USB, etc.
+// ════════════════════════════════════════
+function toggleBackupMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('hdr-backup-menu');
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  if (isOpen) { menu.style.display = 'none'; document.removeEventListener('click', closeBackupMenu); return; }
+  menu.style.display = 'block';
+  setTimeout(() => document.addEventListener('click', closeBackupMenu), 30);
+}
+function closeBackupMenu() {
+  const menu = document.getElementById('hdr-backup-menu');
+  if (menu) menu.style.display = 'none';
+  document.removeEventListener('click', closeBackupMenu);
+}
+
+// Build the full data blob (everything the app stores)
+function buildBackupBlob() {
+  return {
+    _meta: {
+      app: 'TaskBoard',
+      exportedAt: new Date().toISOString(),
+      version: '3'
+    },
+    tasks: tasks || [],
+    customTags: customTags || [],
+    deadlines: deadlines || [],
+    refCards: refCards || [],
+    contacts: contacts || [],
+    lessons: lessons || [],
+    auditTrail: auditTrail || [],
+    meChecklist: meChecklist || [],
+    yeChecklist: yeChecklist || [],
+    meHistory: meHistory || [],
+    yeHistory: yeHistory || [],
+    bankAccounts: bankAccounts || []
+  };
+}
+
+function exportJsonBackup() {
+  const blob = buildBackupBlob();
+  const json = JSON.stringify(blob, null, 2);
+  const ts = new Date();
+  const stamp = ts.getFullYear() + '-' + String(ts.getMonth()+1).padStart(2,'0') + '-' + String(ts.getDate()).padStart(2,'0') + '_' + String(ts.getHours()).padStart(2,'0') + '-' + String(ts.getMinutes()).padStart(2,'0');
+  const filename = `taskboard-backup-${stamp}.json`;
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast(`📤 Exported: ${filename}`);
+}
+
+function importJsonBackup(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      applyBackupBlob(data, file.name);
+    } catch (e) {
+      showToast('❌ Invalid JSON file: ' + e.message);
+    }
+    // Reset input so same file can be re-picked
+    event.target.value = '';
+  };
+  reader.onerror = function() { showToast('❌ Could not read the file.'); event.target.value = ''; };
+  reader.readAsText(file);
+}
+
+function applyBackupBlob(data, sourceLabel) {
+  if (!data || typeof data !== 'object') { showToast('❌ Unrecognized backup format.'); return; }
+  // Safety: confirm before overwriting
+  const counts = `${(data.tasks||[]).length} tasks · ${(data.deadlines||[]).length} deadlines · ${(data.lessons||[]).length} lessons · ${(data.meChecklist||[]).length} ME sections`;
+  if (!confirm(`Import this backup?\n\nFrom: ${sourceLabel || 'clipboard'}\nContents: ${counts}\n\nThis will REPLACE all current data. (Your data is still in Drive if you sync.)`)) return;
+  // Apply each section if present
+  if (Array.isArray(data.tasks)) tasks = data.tasks;
+  if (Array.isArray(data.customTags)) customTags = data.customTags;
+  if (Array.isArray(data.deadlines)) deadlines = data.deadlines;
+  if (Array.isArray(data.refCards)) refCards = data.refCards;
+  if (Array.isArray(data.contacts)) contacts = data.contacts;
+  if (Array.isArray(data.lessons)) lessons = data.lessons;
+  if (Array.isArray(data.auditTrail)) auditTrail = data.auditTrail;
+  if (Array.isArray(data.meChecklist)) meChecklist = data.meChecklist;
+  if (Array.isArray(data.yeChecklist)) yeChecklist = data.yeChecklist;
+  if (Array.isArray(data.meHistory)) meHistory = data.meHistory;
+  if (Array.isArray(data.yeHistory)) yeHistory = data.yeHistory;
+  if (Array.isArray(data.bankAccounts)) bankAccounts = data.bankAccounts;
+  saveLocal();
+  saveCl();
+  if (typeof pushToCloud === 'function') { try { pushToCloud(); } catch(e){} }
+  // Re-render whatever's currently visible
+  if (typeof render === 'function') render();
+  if (typeof renderDeadlines === 'function') renderDeadlines();
+  if (typeof renderChecklist === 'function') { renderChecklist('me'); renderChecklist('ye'); }
+  if (typeof renderReference === 'function') renderReference();
+  if (typeof renderContacts === 'function') renderContacts();
+  if (typeof renderLessons === 'function') renderLessons();
+  showToast(`✓ Imported: ${counts}`);
+}
+
+function copyJsonToClipboard() {
+  const json = JSON.stringify(buildBackupBlob(), null, 2);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(
+      () => showToast('📋 Backup copied to clipboard (paste into a note/email).'),
+      () => fallbackCopy(json)
+    );
+  } else { fallbackCopy(json); }
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('📋 Backup copied to clipboard.'); }
+    catch (e) { showToast('❌ Could not copy. Try Export JSON instead.'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function pasteJsonFromClipboard() {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    showToast('Browser does not support clipboard read. Use Import JSON from file instead.');
+    return;
+  }
+  navigator.clipboard.readText().then(text => {
+    try { applyBackupBlob(JSON.parse(text), 'clipboard'); }
+    catch (e) { showToast('❌ Clipboard does not contain valid backup JSON.'); }
+  }, () => showToast('❌ Could not read clipboard (browser may have blocked it).'));
+}
+
 function exportAuditTrail() {
   if (!auditTrail.length) { showToast('No audit trail to export.'); return; }
   let csv = 'Timestamp,Action,Target,Details\n';
@@ -7248,6 +7720,10 @@ function applyAllData(d) {
 // Boot
 window.addEventListener('load', function() {
   loadData();
+  // Restore folder connection (if previously connected)
+  if (typeof initFolderConnection === 'function') {
+    initFolderConnection().catch(e => console.error('Folder init failed:', e));
+  }
 });
 
 // If google library is delayed, retry sign-in state check
